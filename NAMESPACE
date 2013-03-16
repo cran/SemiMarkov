@@ -1,0 +1,9 @@
+import("numDeriv", "MASS", "alabama") 
+export("semiMarkov", "hazard", "param.init", "table.state")
+S3method(print, semiMarkov)
+S3method(summary, semiMarkov)
+S3method(print, hazard)
+S3method(summary, hazard)
+S3method(plot, hazard)
+
+
