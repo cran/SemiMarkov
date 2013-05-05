@@ -217,7 +217,8 @@ Agnieszka Listwon, Philippe Saint-Pierre
 ## Asthma control data
 data(asthma)
 
-## Definition of the model:  states, names, possible transtions and waiting time distributions
+## Definition of the model:  states, names, possible transtions and waiting time 
+## distributions
 states_1 <- c("1","2","3")
 mtrans_1 <- matrix(FALSE, nrow = 3, ncol = 3)
 mtrans_1[1, 2:3] <- c("E","E")
@@ -252,7 +253,8 @@ fit1 <- semiMarkov(data = asthma, states = states_1, mtrans = mtrans_1)
 #fit5 <- semiMarkov(data = asthma, states = states_1, mtrans = mtrans_1,
 #                   dist_init=init$dist.init[,3], proba_init=init$proba.init[,3])
 #fit6 <- semiMarkov(data = asthma, states = states_1, mtrans = mtrans_1,
-#                   dist_init=c(rep(1.5,6),c(1.8,2)), proba_init=c(0.2,0.8,0.3,0.7,0.35,0.65))                   
+#                   dist_init=c(rep(1.5,6),c(1.8,2)), 
+#                   proba_init=c(0.2,0.8,0.3,0.7,0.35,0.65))                   
             
 
 
