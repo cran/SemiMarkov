@@ -13,7 +13,7 @@ The rows corresponding to the same subject are ordered chronologically. The last
 
 \usage{data(asthma)}
 \format{
-A data frame containing 876 rows. 
+A data frame containing 928 rows. 
 %Rows are grouped by patient number and ordered by the identification number. 
 Each row represents a patient examination and contains several covariates.
 \describe{

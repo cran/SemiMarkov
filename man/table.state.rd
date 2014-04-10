@@ -49,7 +49,7 @@ Number of individuals subjected to censoring.
 }
 
 \author{
-Agnieszka Listwon
+Agnieszka Listwon-Krol
 }
 \seealso{
 \link{param.init}, \link{semiMarkov}

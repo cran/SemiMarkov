@@ -15,7 +15,7 @@ This function computes the parametric maximum likelihood estimation in multi-sta
 \usage{
 semiMarkov(data, cov = NULL, states, mtrans, cov_tra = NULL, 
           cens = NULL, dist_init=NULL, proba_init = NULL, coef_init = NULL, 
-          xtol_rel = 1e-05, alpha_ci = 0.95 )
+          alpha_ci = 0.95, control = list() )
 }
 
 \arguments{
@@ -73,12 +73,13 @@ Optional list of vectors: a vector is associated with covariate included in the 
 %An optional value specifying the limit on iterations executed by the optimization method. %\code{nloptr}
 %}
 
-  \item{xtol_rel}{
-Relative tolerance in the optimization parameter values. 
-}
+
 
   \item{alpha_ci}{
 Confidence level to be considered for the confidence intervals. The default value is 0.95.
+}
+  \item{control}{
+  (Optional) The control list of optimization parameters for \code{solnp} optimization algorithm.
 }
 }
 
@@ -116,6 +117,8 @@ The model parameters are the distribution parameters, the transition probabiliti
 The default initial values for the distribution parameters are fixed to 1. As the three possible distributions are nested for parameters equal to 1 (See details of the \code{semiMarkov} function), the initial distribution corresponds to an exponential with parameter equal to 1 (whatever the chosen distribution). The default initial values for the regression coefficients are fixed to 0 meaning that the covariates have no effect on the hazard rates of the sojourn times. These initial values may be changed using the arguments \code{dist_init} and \code{coef_init}.
 
 By default, the initial probabilities are calculated by simple proportions. The probability associated to the transition from \eqn{h} to \eqn{j} is estimed by the number of observed transitions from state \eqn{h} to state \eqn{j} divided by the total number of transitions from state \code{h} observed in the data. The results are displayed in matrix \code{matrix.P}. The number of parameters for transition probabilities is smaller than the number of possible transitions as the probabilities in the same row sum up to one. Considering this point and that the probability to stay in the same state is zero, the user can changed the initial values using the argument \code{proba_init}.
+
+The Yinyu Ye optimization solver to nonlinear problem is applied to maximize the log-likelihood using the function \code{solnp} created by A. Ghalanos and S. Theussl. In order to modify the optimization parameters refer to the package \code{Rsolnp} documentation.
 
 Some optimization difficulties can arrise when there is not enough information in the data to estimate each transition rate. The users can change the optimization parameters and the initial values. It may be appropriate to reduce the number of states in the model, the number of allowed transitions, or the number of covariate effects, to ensure convergence.
 %the optimization method,
@@ -194,7 +197,10 @@ Printing a \code{semiMarkov} object by typing the object's name at the command l
 }
 
 \references{
+  
 Listwon, A., Saint-Pierre P. (2013). SemiMarkov : An R Package for Parametric Estimation in Multi-State Semi-Markov Models.
+
+Ghalanos, A. and Theussl S. (2012). Rsolnp: General Non-linear Optimization Using Augmented Lagrange Multiplier Method. R package version 1.14.
 
 Limnios, N., Oprisan, G. (2001). \emph{Semi-Markov processes and reliability}. Statistics for Industry and Technology. Birkhauser Boston.
 
@@ -206,7 +212,7 @@ Perez-Ocon, R., Ruiz-Castro, J. E. (1999). Semi-markov models and applications,
 chapter 14, pages 229-238. \emph{Kluwer Academic Publishers}.
 }
 \author{
-Agnieszka Listwon, Philippe Saint-Pierre
+Agnieszka Listwon-Krol, Philippe Saint-Pierre
 }
 
 \seealso{
@@ -249,11 +255,11 @@ fit1 <- semiMarkov(data = asthma, states = states_1, mtrans = mtrans_1)
 ## "fit5" and "fit6" are equivalent
 
 #init <- param.init(data = asthma, states = states_1, mtrans = mtrans_1,
-#        dist_init=c(rep(1.5,6),c(1.8,2)), proba_init=c(0.2,0.8,0.3,0.7,0.35,0.65))
+#        dist_init=c(rep(1.5,6),c(1.8)), proba_init=c(0.2,0.8,0.3,0.7,0.35,0.65))
 #fit5 <- semiMarkov(data = asthma, states = states_1, mtrans = mtrans_1,
 #                   dist_init=init$dist.init[,3], proba_init=init$proba.init[,3])
 #fit6 <- semiMarkov(data = asthma, states = states_1, mtrans = mtrans_1,
-#                   dist_init=c(rep(1.5,6),c(1.8,2)), 
+#                   dist_init=c(rep(1.5,6),c(1.8)), 
 #                   proba_init=c(0.2,0.8,0.3,0.7,0.35,0.65))                   
             
 

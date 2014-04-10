@@ -1,6 +1,5 @@
 library(numDeriv)
 library(MASS)
-library(alabama)
 library(SemiMarkov)
 
 

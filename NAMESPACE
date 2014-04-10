@@ -1,4 +1,4 @@
-import("numDeriv", "MASS", "alabama") 
+import("numDeriv", "MASS", "Rsolnp") 
 export("semiMarkov", "hazard", "param.init", "table.state")
 S3method(print, semiMarkov)
 S3method(summary, semiMarkov)

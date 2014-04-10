@@ -89,7 +89,7 @@ A data frame giving the names of the parameters, transitions associated with and
 }
 }
 \author{
-Agnieszka Listwon
+Agnieszka Listwon-Krol
 }
 \seealso{
 \link{hazard}, \link{semiMarkov}

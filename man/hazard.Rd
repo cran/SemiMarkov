@@ -137,7 +137,7 @@ chapter 14, pages 229-238. \emph{Kluwer Academic Publishers}.
 
 
 \author{
-Agnieszka Listwon
+Agnieszka Listwon-Krol
 }
 
 \seealso{

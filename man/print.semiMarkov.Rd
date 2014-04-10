@@ -33,7 +33,7 @@ No value returned.
 }
 
 \author{
-Agnieszka Listwon
+Agnieszka Listwon-Krol
 }
 
 \seealso{
