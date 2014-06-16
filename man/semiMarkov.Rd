@@ -15,7 +15,8 @@ This function computes the parametric maximum likelihood estimation in multi-sta
 \usage{
 semiMarkov(data, cov = NULL, states, mtrans, cov_tra = NULL, 
           cens = NULL, dist_init=NULL, proba_init = NULL, coef_init = NULL, 
-          alpha_ci = 0.95, control = list() )
+          alpha_ci = 0.95, Wald_par = NULL, eqfun = NULL, 
+          ineqLB = NULL,ineqUB = NULL, control = list() )
 }
 
 \arguments{
@@ -58,9 +59,9 @@ Optional list of vectors: a vector is associated with covariate included in the 
   }
   
  \item{proba_init}{
-  Optional numeric vector giving the initial values of the transition probabilities. The sum of the probabilities in the same raw must be equal to 1. According to semi-Markov model, the probability to stay in the same state must be equal to 0. The default values for the transition probabilities are estimated from the data. If \code{data = NULL}, the argument \code{proba_init} is obligatory.
+  Optional numeric vector giving the initial values of the transition probabilities. The sum of the probabilities in the same row must be equal to 1. According to semi-Markov model, the probability to stay in the same state must be equal to 0. The default values for the transition probabilities are estimated from the data. If \code{data = NULL}, the argument \code{proba_init} is obligatory.
   }
-  
+     
   \item{coef_init}{
   Optional numeric vector giving the initial values of the regression coefficients associated with the covariates. Default is 0 for each regression coefficient which means that the covariate has no effect.
   }
@@ -73,13 +74,37 @@ Optional list of vectors: a vector is associated with covariate included in the 
 %An optional value specifying the limit on iterations executed by the optimization method. %\code{nloptr}
 %}
 
-
-
   \item{alpha_ci}{
-Confidence level to be considered for the confidence intervals. The default value is 0.95.
+Confidence level to be considered for the confidence intervals. The default value is 0.95. 
 }
+
+  \item{Wald_par}{
+  Optional numeric vector giving the values to be tested (null hypothesis) by the Wald test for each parameter. The Wald statistics are evaluated only for the parameters 
+  of distributions and regression coefficients. The length of this vector must then be equal to the number of those parameters. The order of the values must be as in the 
+  parameters table given by objects \code{semiMarkov} or \code{param.init} (excluding the parameters associated to the transition probabilities). The default values for 
+  the elements of \code{Wald_par} vector are 1 for the distribution parameters and 0 for the regression coefficients.
+  %Optional character of theoretical values that estimated parameters are equal to in the null hypothesis in Wald test. As the Wald statistics are
+  %computed for the parameters of distributions and regression coefficients the length of the vector must equal to the number of those parameters. 
+  %The order of the values is to be as in the table of parameters of the objects \code{semiMarkov} or \code{param.init} (excluding the probabilities 
+  %for transitions ).
+  }
+  
+  \item{eqfun}{
+     Optional list given equality constraints between parameters. These constraints are passed using the equality constraint function that can be defined in the \code{solnp} optimization function. See below for details.
+   %  Optional list given equality constraint function that are to be passed to the \code{solnp} optimization function. See below for details.  
+  }
+ 
+  \item{ineqLB}{
+     Optional list given values of lower bound for parameters. These values are used in the inequality constraint that can be defined in the \code{solnp} optimization function. See below for details.         
+  }
+  
+  \item{ineqUB}{ 
+     Optional list given values of upper bound for parameters. These values are used in the inequality constraint that can be defined in the \code{solnp} optimization function. See below for details.         
+     %Optional list given values for the upper bound of the inequality constraint that are to be passed to the \code{solnp} optimization function. See below for details.              
+  }
+  
   \item{control}{
-  (Optional) The control list of optimization parameters for \code{solnp} optimization algorithm.
+   The control list of optimization parameters for \code{solnp} optimization function.
 }
 }
 
@@ -121,6 +146,40 @@ By default, the initial probabilities are calculated by simple proportions. The 
 The Yinyu Ye optimization solver to nonlinear problem is applied to maximize the log-likelihood using the function \code{solnp} created by A. Ghalanos and S. Theussl. In order to modify the optimization parameters refer to the package \code{Rsolnp} documentation.
 
 Some optimization difficulties can arrise when there is not enough information in the data to estimate each transition rate. The users can change the optimization parameters and the initial values. It may be appropriate to reduce the number of states in the model, the number of allowed transitions, or the number of covariate effects, to ensure convergence.
+
+Some additionals constraints can be introduced using \code{eqfun}, \code{ineqLB} and \code{ineqUB}. These constraints on distribution parameters, transition probabilities 
+and regression coefficients can be defined using lists of vectors. 
+The argument \code{eqfun} gives the possibility to add constraints of type \eqn{par1 = a*par2} (\eqn{a} is a constant). This equality constraint must be expressed with a vector 
+of 3 elements where the first element is the identifier of the parameters type (\code{"dist"} for distribution parameters, \code{"proba"} for the transition probabilities and 
+\code{"coef"} for the regression coefficients), the second and the third elements are the index of \eqn{par1} and \eqn{par2}, respectively. The index values of 
+distribution parameters, transition probabilities and regression coefficients can be found in the table provided by an object \code{semiMarkov}. The last element of the vector 
+corresponds to the constant \eqn{a}. The arguments \code{ineqLB} and \code{ineqUB} allow to add constraints of type \eqn{par \geq a} and \eqn{par \leq a}, respectively. 
+These arguments are lists of vectors of length 3 where the first element is the type of the parameter (\code{"dist"}, \code{"proba"} or \code{"coef"}), the second element 
+is the index of parameter \eqn{par} and the last one is the constant \eqn{a}.
+If a chosen constraint corresponds to a transition probability, it should be considered that the last probabilities in a row of the transition matrix are not estimated but 
+obtained directly since the sum of transition probabilities in the same row is equal to 1. Thus, no additional constraints related to these parameters are permitted. Moreover, 
+note that the argument \code{eqfun} does not allowed to define relationships between parameters of different types (for instance, a transition probability can not be equal to 
+a regression coefficient). The optional constraints on parameters should be used prudently since they may induce problems in the convergence of the optimization method. In particular, 
+the Wald statistic and the standard deviation may not be computed for some parameters due to negative values in the hessian matrix. Note that the default constraints induce by the model 
+definition are treated in priority.
+
+%It is possible to adjust the constraints to the needs of user using \code{eqfun}, \code{ineqLB} and \code{ineqUB} that should be lists of 
+%vectors.  The constraints are possible for the distribution parameters, probabilities and regression coefficients.
+%If a chosen constraint corresponds to a probability parameter, it should be considered that the last probabilities in a line from the transition matrix are not estimated but
+%  calculated directly after the estimation to maintain the assumption of the sum of probabilities in one line equals to 1. Thus, no additional 
+%  constraints related to these parameters are permitted.
+%The option \code{eqfun} gives the possibility to add constraints of type \eqn{par1 = a*par2} (\eqn{a} - constant) and that should be expressed with a vector of 3 elements
+%where the first element is the identifier of the parameters type (\code{"dist"} for distribution parameters, \code{"proba"} for the probability and \code{"coef"} for the regression
+%coefficients), the second and the third elements are the positions of \eqn{par1} and \eqn{par2}, respectively (the information on the positions of distribution parametersand regression coefficients
+%can be found in the respective tables of the object \code{param.init} and in the table of the object \code{semiMarkov} and the positions of probabilities can be found in the table of the object \code{semiMarkov}). The last element of the vector corresponds to the constant \eqn{a}. 
+%The options \code{ineqLB} and \code{ineqUB} create the possibility to add the constraints of type \eqn{par \geq a} and    \eqn{par \leq a}, respectively.
+%These are lists of vectors of length 3 where the first element is the identifier of the parameter  type (\code{"dist"}, \code{"proba"} or \code{"coef"}), the second ele;ent
+%is the position of the \eqn{par} and the last one is the constant \eqn{a}. 
+%These options
+%should be used prudently as they may impose problems for the convergence or reliability of a model. When using the additional constraints the Wald statistic may not be computed for some parameters.
+%What is more, the default constraints for the parameters are treated
+%with the priority. Finally, in \code{eqfun} no relationships between parameters of different types are allowed. 
+
 %the optimization method,
 
 %A METTRE DANS L'ARTICLE
@@ -176,14 +235,14 @@ A matrix containing the informations on the model definition : the possible tran
 Recall the initial values of the parameters. The third column of this object can be used in \code{hazard} function.
 }
  \item{table.dist}{
-Statistics for the estimations of distribution parameters of waiting time distributions. For the exponential distribution one data frame for the parameter \code{sigma} is returned, for the Weibull distribution two data frames for \code{sigma} and \code{nu} are returned, and for the Exponentiated Weibull distribution three data frames for \code{sigma}, \code{nu} and \code{theta} are returned. The columns of each data frame are the possible transitions, the estimations, the standard deviations, the lower and upper bounds of confidence intervals, the Wald test statistics and the p-values of the Wald test when testing hypothesis \code{sigma=1}, \code{nu=1} or \code{theta=1}.
+Statistics for the estimations of distribution parameters of waiting time distributions. For the exponential distribution one data frame for the parameter \code{sigma} is returned, for the Weibull distribution two data frames for \code{sigma} and \code{nu} are returned, and for the Exponentiated Weibull distribution three data frames for \code{sigma}, \code{nu} and \code{theta} are returned. The columns of each data frame are the possible transitions, the estimations, the standard deviations, the lower and upper bounds of confidence intervals, the Wald test null hypothesis, the Wald test statistics and the p-values of the Wald test when testing hypothesis \code{sigma=1}, \code{nu=1} or \code{theta=1}.
 }
  \item{table.proba}{ 
  A data frame giving the estimations of the transition probabilities of the Markov chain and their standard deviations. By definition, the probability associated to the last possible transition of each row of the matrix \code{mtrans} is equal to \eqn{1-pr}, where \eqn{pr} is the sum of all other probabilities from the row.
 }  
 % To simplify the optimization for the last possible transition of each row of the matrix \code{mtrans},
  \item{table.coef}{
-If some covariates are included in the model it returns a data frame with the statistics for the estimated values of the regression coefficients. The columns of tha data frame are the transitions associated with the coefficients, the estimations, the standard deviations, the lower and upper bounds of confidence intervals, the Wald test statistics and the p-values of the Wald test when testing hypothesis \code{coef=0}.
+If some covariates are included in the model it returns a data frame with the statistics for the estimated values of the regression coefficients. The columns of the data frame are the transitions associated with the coefficients, the estimations, the standard deviations, the lower and upper bounds of confidence intervals, the Wald test null hypothesis, the Wald test statistics and the p-values of the Wald test when testing hypothesis \code{coef=0}.
 }
  \item{table.param}{
 Data frame with the statistics for all the model parameters, that is \code{table.dist}, \code{table.proba} and \code{table.coef} in a single data frame.
@@ -261,8 +320,31 @@ fit1 <- semiMarkov(data = asthma, states = states_1, mtrans = mtrans_1)
 #fit6 <- semiMarkov(data = asthma, states = states_1, mtrans = mtrans_1,
 #                   dist_init=c(rep(1.5,6),c(1.8)), 
 #                   proba_init=c(0.2,0.8,0.3,0.7,0.35,0.65))                   
-            
 
+
+## The Wald test null hypothesis is modified
+## Wald statistics when testing nullity of distribution parameters
+## and regression coefficients equal to -1
+#fit7 <- semiMarkov(data = asthma, cov = BMI, states = states_1, mtrans = mtrans_1,
+#                   Wald_par = c(rep(0,7),rep(-1,6)))
+            
+## semi-Markov model with additional constraints 
+## distribution parameters sigma for transition "1->3" = sigma for transition "2->1" 
+#fit8 <- semiMarkov(data = asthma, cov = BMI, states = states_1, mtrans = mtrans_1,
+#                   eqfun = list(c("dist",2,3,1)))
+
+## semi-Markov model with additional constraints 
+## regression coefficients beta for transition "1->2" = beta for transition "2->1" 
+##                                                    = beta for transition "2->3"  
+#fit9 <- semiMarkov(data = asthma, cov = BMI, states = states_1, mtrans = mtrans_1,
+#                   eqfun = list(c("coef",1,3,1),c("coef",1,4,1)))
+
+## semi-Markov model with additional constraints 
+## regression coeficient beta for transition "1->2" belongs to [-0.2,0.2]
+## and regression coeficient beta for transition "2->3" belongs to [-0.05,0.05]
+#fit10 <- semiMarkov(data = asthma, cov = BMI, states = states_1, mtrans = mtrans_1,
+#                    ineqLB = list(c("coef",1,-0.2),c("coef",4,-0.05)),
+#                    ineqUB = list(c("coef",1,0.2),c("coef",4,0.05)))
 
 }
  \keyword{documentation}

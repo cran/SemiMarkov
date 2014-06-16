@@ -10,7 +10,7 @@ Plot method for one or several (maximum 10) objects of class \code{hazard}. Depe
 \usage{
 \method{plot}{hazard}(x, x2 = NULL, x3 = NULL, x4 = NULL, x5 = NULL, x6 = NULL, x7 = NULL, 
       x8 = NULL, x9 = NULL, x10 = NULL, transitions = NULL, names = NULL, 
-      legend = TRUE, legend.pos = NULL, colors = NULL, xlab = "Time",
+      legend = TRUE, legend.pos = NULL, cex = NULL, colors = NULL, xlab = "Time",
       ylab = "Hazard function", lwd = 3, type = "p", ...)
 }
 \arguments{
@@ -56,6 +56,9 @@ A logical value specifying if a legend should be added. Default is \code{TRUE}.
 }
   \item{legend.pos}{
 A vector giving the legend position.
+}
+  \item{cex}{
+character expansion factor relative to current \code{par("cex")}.
 }
   \item{colors}{
 A vector of colours for the hazard rates.
