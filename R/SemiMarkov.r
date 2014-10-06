@@ -54,13 +54,19 @@ if(data[i,3]==states[j])data[i,3]<-j
 for(i in 1:length(states)){states[i]<-i}
 
 #transitions specified in mtrans must be the same as in data
+s_0<-0
 for(i in 1:dim(mtrans)[1]){
+if( all(mtrans[i,]==F))s_0<-s_0+1
 for(j in 1:dim(mtrans)[2]){
 if(i!=j && mtrans[i,j]==FALSE && paste(i,j)%in%unique(paste(data[,2],data[,3])))stop("All observed transitions in data must be specified in matrix 'mtrans'")
 }}
 
 #Defining number of states
+
 s<-length(states)
+
+if(s_0>0){ss<-s-s_0}
+else{ss<-s}
 
 ### censorship and table.state
 if(!missing(cens) && !cens%in%data[,3])stop("Wrong format of the argument 'cens'")
@@ -538,6 +544,7 @@ V<-function(x){
 logdensity<-log(.dens(nprob,mtrans,dist,data1[,4],r,cov1, x,parameters)[indic1])
 logmarginal<-log(.marg(nprob,mtrans,dist,data2[,4],r,cov2,x,parameters)[indic2])
 
+
 return(-1*(sum(logdensity) + sum(logmarginal)))
 }}
 else{
@@ -553,26 +560,27 @@ logmarginal<-log(.marg_trans(nprob,mtrans,dist,data2[,4],dim(cov)[2],cov2,x,cov_
 #number of states with probabilities to estimate
 ###########
 
-nstate_estim<-c()
-k<-1
-state<-states[k]
-nline<-c()
-if(length(states)>2){
-for(i in (ndist+1):(ndist+nprob-1)){
-state <-substring(parameters[i,2],first=1,last=1)
-  if(i==(ndist+1)){trans<-1}
-else {trans<-0}
-  if(substring(parameters[i+1,2],first=1,last=1)!=state){
-    trans<-1
-  }
-
-nline<-c(nline,trans)
-}}
-else trans<-0
+#nstate_estim<-c()
+#k<-1
 #state<-states[k]
-#nstate_estim<-c(nstate_estim,state)
-
-nstate_estim<-length(nline[which(nline==1)])
+#nline<-c()
+#if(length(states)>2 && nprob>1){
+#for(i in (ndist+1):(ndist+nprob-1)){
+#state <-substring(parameters[i,2],first=1,last=1)
+#  if(i==(ndist+1)){trans<-1}
+#else {trans<-0}
+#print(nprob)
+#  if(substring(parameters[i+1,2],first=1,last=1)!=state){
+#    trans<-1
+#  }
+#
+#nline<-c(nline,trans)
+#}}
+#else trans<-0
+##state<-states[k]
+##nstate_estim<-c(nstate_estim,state)
+#
+#nstate_estim<-length(nline[which(nline==1)])
 
 if(length(r)>1 || r>0)ncov<-length(parameters[(ndist+nprob+1):dim(parameters)[1],1])
 else ncov<-0
@@ -874,7 +882,7 @@ for(i in 1:s_trans){
 licz<-length(which(substring(parameters[(e+w+ew+1):(e+w+ew+nprob),2],first=1,last=1)==states[which_rows[i]]))
 
 if(is.matrix(macierz) && licz>0){
-if(macierz[(1:licz),(1:licz)]>=0){
+if(all(macierz[(1:licz),(1:licz)]>=0)){
 SD_last<-c(SD_last,sum(as.matrix(macierz[(1:licz),(1:licz)])))}
 else{SD_last<-c(SD_last,NaN)}
 macierz<-macierz[-(1:licz),-(1:licz)]
@@ -886,8 +894,7 @@ SD_last<-round(sqrt(SD_last),2)
 ############
 # table proba
 #############
-
-table.probabilities<-data.frame(Index=c(1:nprob,rep('-',s)),Transition=transitionsP,Probability=c(solution[(e+w+ew+1):(e+w+ew+nprob)],rep(0,length(trP))),SD=c(sd[(e+w+ew+1):(e+w+ew+nprob)],SD_last),
+table.probabilities<-data.frame(Index=c(1:nprob,rep('-',ss)),Transition=transitionsP,Probability=c(solution[(e+w+ew+1):(e+w+ew+nprob)],rep(0,length(trP))),SD=c(sd[(e+w+ew+1):(e+w+ew+nprob)],SD_last),
 				Lower_CI=rep('-',nprob+length(trP)),Upper_CI=rep('-',nprob+length(trP)),Wald_H0=rep('-',nprob+length(trP)),Wald_test=rep('-',nprob+length(trP)),
 				p_value=rep('-',nprob+length(trP)))
 
@@ -1324,7 +1331,7 @@ result
 {if(cova!=FALSE){z<-exp(as.matrix(cova.mat)%*%matrix(beta,ncol=1))
 }else{z<-1}
 result<-(1/sigma)^z
-
+print(paste('result=',t))
 change<-which(result==0)
 result[change]<-1e-320
 
@@ -1630,6 +1637,12 @@ matrix(dens_row,ncol=1)
 
 
 }
+
+
+
+
+
+
 ###########################################################################################################################################
 
 ###################################
@@ -2877,7 +2890,9 @@ for(i in 1:tr){
 if(dist[i]=="Exponential"){
 distribution[i]<-"Exponential"
 x<- .hazardE(time,FALSE,0, object1[i,3])
-x<-as.vector(x)}
+x<-as.vector(x)
+print('x')
+print(object1[i,3])}
 #Weibull distribution
 else if(dist[i]=="Weibull"){
 distribution[i]<-"Weibull"
