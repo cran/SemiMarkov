@@ -114,7 +114,7 @@ A matrix containing informations on the model: the possible transitions and the 
 
 \references{
 
-Krol, A., Saint-Pierre P. (2014). SemiMarkov : An R Package for Parametric Estimation in Multi-State Semi-Markov Models.
+Listwon, A., Saint-Pierre P. (2013). SemiMarkov : An R Package for Parametric Estimation in Multi-State Semi-Markov Models.
 
 Limnios, N., Oprisan, G. (2001). \emph{Semi-Markov processes and reliability}. Statistics for Industry and Technology. Birkhauser Boston.
 
@@ -144,9 +144,7 @@ Agnieszka Listwon-Krol
 \link{plot.hazard}, \link{semiMarkov}, \link{param.init}, \link{summary.hazard}, \link{print.hazard}
 }
 \examples{
-
 \dontrun{
-
 ## Asthma control data
 data(asthma)
 
@@ -177,37 +175,36 @@ alpha3 <- hazard(fit1, time=sort(unique(asthma$time)))
 plot(alpha3)
 
 ## semi-Markov model with a covariate "BMI"
-fit2 <- semiMarkov(data = asthma, cov = as.data.frame(asthma$BMI), 
-        states = states_1, mtrans = mtrans_1)
+#fit2 <- semiMarkov(data = asthma, cov = as.data.frame(asthma$BMI), 
+#        states = states_1, mtrans = mtrans_1)
 
 ## Time fixed covariate
 ## Covariate equal to 0 and 1 for each transition
-alpha4 <- hazard(fit2)
-alpha5 <- hazard(fit2, cov=1)
-plot(alpha4,alpha5)
+#alpha4 <- hazard(fit2)
+#alpha5 <- hazard(fit2, cov=1)
+#plot(alpha4,alpha5)
 
 ## Time dependent covariate 
 ## Suppose that the covariate value is known for all times values
-Time<-sort(unique(asthma$time))             # observed times in ascending order
-Cov1<-sort(rbinom(length(Time), 1, 0.3))    # simulation of binary covariate
-Cov2<-sort(rexp(length(Time), 5))           # simulation of numeric covariate
-alpha6 <- hazard(fit2, time=Time, cov=Cov1)
-plot(alpha6)
-alpha7 <- hazard(fit2, time=Time, cov=Cov2)
-plot(alpha7)
+#Time<-sort(unique(asthma$time))             # observed times in ascending order
+#Cov1<-sort(rbinom(length(Time), 1, 0.3))    # simulation of binary covariate
+#Cov2<-sort(rexp(length(Time), 5))           # simulation of numeric covariate
+#alpha6 <- hazard(fit2, time=Time, cov=Cov1)
+#plot(alpha6)
+#alpha7 <- hazard(fit2, time=Time, cov=Cov2)
+#plot(alpha7)
 
 ## semi-Markov model with two covariates 
 ## "BMI" affects transitions "1->3" and "3->1"
 ## "Sex" affects transition "3->1"
-SEX <- as.data.frame(asthma$Sex)
-BMI <- as.data.frame(asthma$BMI)
-fit3 <- semiMarkov(data = asthma, cov = as.data.frame(cbind(BMI,SEX)),
-                   states = states_1, mtrans = mtrans_1,
-                   cov_tra = list(c("13","31"),c("31")))
-alpha8 <- hazard(fit3, cov=c(0,0))
-alpha9 <- hazard(fit3, cov=c(1,1))
-plot(alpha8,alpha9)
-
+#SEX <- as.data.frame(asthma$Sex)
+#BMI <- as.data.frame(asthma$BMI)
+#fit3 <- semiMarkov(data = asthma, cov = as.data.frame(cbind(BMI,SEX)),
+#                   states = states_1, mtrans = mtrans_1,
+#                   cov_tra = list(c("13","31"),c("31")))
+#alpha8 <- hazard(fit3, cov=c(0,0))
+#alpha9 <- hazard(fit3, cov=c(1,1))
+#plot(alpha8,alpha9)
 }
 }
  \keyword{documentation}
