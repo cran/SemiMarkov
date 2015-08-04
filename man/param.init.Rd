@@ -99,7 +99,8 @@ Agnieszka Listwon-Krol
 ## Asthma control data
 data(asthma)
 
-## Definition of the model:  states, names, possible transtions and waiting time distributions
+## Definition of the model:  states, names,
+# possible transtions and waiting time distributions
 states_1 <- c("1","2","3")
 mtrans_1 <- matrix(FALSE, nrow = 3, ncol = 3)
 mtrans_1[1, 2:3] <- c("W","W")
@@ -114,11 +115,13 @@ init_2 <- param.init(data = asthma, states = states_1, mtrans = mtrans_1,
           dist_init=c(rep(1.5,6),rep(1.8,6),rep(2,2)),
           proba_init=c(0.2,0.8,0.3,0.7,0.35,0.65))
 
-## Default initial values with a covariate "Sex" influencing transitions " 1->2" and "3->2"
+## Default initial values with a covariate "Sex"
+# influencing transitions " 1->2" and "3->2"
 init_3 <- param.init(data = asthma, cov=as.data.frame(asthma$Sex),
           states = states_1, mtrans = mtrans_1, cov_tra=list(c("12","32")))
 
-## Definition of initial values with a covariate "Sex" influencing transitions " 1->2" and "3->2"
+## Definition of initial values with a covariate "Sex" 
+# influencing transitions " 1->2" and "3->2"
 init_4 <- param.init(data = asthma, cov=as.data.frame(asthma$Sex),
           states = states_1, mtrans = mtrans_1, cov_tra=list(c("12","32")),
           dist_init=c(rep(1.5,6),rep(1.8,6),rep(2,2)),

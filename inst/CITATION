@@ -1,0 +1,20 @@
+citHeader("To cite SemiMarkov in publications use:")
+
+citEntry(entry = "Article",
+  title        = "{SemiMarkov}: An {R} Package for Parametric Estimation in Multi-State Semi-Markov Models",
+  author       = personList(as.person("Agnieszka Kr\\'{o}l"),
+                   as.person("Philippe Saint-Pierre")),
+  journal      = "Journal of Statistical Software",
+  year         = "2015",
+  volume       = "66",
+  number       = "6",
+  pages        = "1--16",
+  url          = "http://www.jstatsoft.org/v66/i06/",
+
+  textVersion  =
+  paste("Agnieszka Krol, Philippe Saint-Pierre (2015).",
+        "SemiMarkov: An R Package for Parametric Estimation in Multi-State Semi-Markov Models.",
+        "Journal of Statistical Software, 66(6), 1-16.",
+        "URL http://www.jstatsoft.org/v66/i06/.")
+)
+

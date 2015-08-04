@@ -1,4 +1,7 @@
 import("numDeriv", "MASS", "Rsolnp") 
+importFrom("graphics", "matplot", "mtext", "par", "title")
+importFrom("stats", "pchisq", "qnorm")
+importFrom("utils", "head")
 export("semiMarkov", "hazard", "param.init", "table.state")
 S3method(print, semiMarkov)
 S3method(summary, semiMarkov)

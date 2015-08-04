@@ -10,8 +10,8 @@ Plot method for one or several (maximum 10) objects of class \code{hazard}. Depe
 \usage{
 \method{plot}{hazard}(x, x2 = NULL, x3 = NULL, x4 = NULL, x5 = NULL, x6 = NULL, x7 = NULL, 
       x8 = NULL, x9 = NULL, x10 = NULL, transitions = NULL, names = NULL, 
-      legend = TRUE, legend.pos = NULL, cex = NULL, colors = NULL, xlab = "Time",
-      ylab = "Hazard function", lwd = 3, type = "p", ...)
+      legend = TRUE, legend.pos = NULL, cex = NULL, colors = NULL,
+	  xlab = "Time", ylab = "Hazard function", lwd = 3, type = "p", ...)
 }
 \arguments{
   \item{x}{
@@ -91,11 +91,14 @@ Agnieszka Listwon-Krol
 \link{hazard}, \link{semiMarkov}
 }
 \examples{
- \dontrun{    
+\dontrun{
+
+
 ## Asthma control data
 data(asthma)
 
-## Definition of the model:  states, names, possible transtions and waiting times distributions
+## Definition of the model:  states, names, possible transtions 
+# and waiting times distributions
 states_1 <- c("1","2","3")
 mtrans_1 <- matrix(FALSE, nrow = 3, ncol = 3)
 mtrans_1[1, 2:3] <- c("E","E")
@@ -109,21 +112,22 @@ plot(lambda, transitions = c("13","31"), names = c("lambda"),
 legend.pos=c(2,0.09,2,0.4))
 
 ## semi-Markov model in each stratum of Severity
-#fit0 <- semiMarkov(data = asthma[asthma$Severity==0,],
-#        states = states_1, mtrans = mtrans_1)
-#fit1 <- semiMarkov(data = asthma[asthma$Severity==1,],
-#        states = states_1, mtrans = mtrans_1)
-#lambda0<-hazard (fit0, type = "lambda",s=0,t=5,Length=1000)
-#lambda1<-hazard (fit1, type = "lambda",s=0,t=5,Length=1000)
-#plot(lambda0,lambda1, names = c("lambda0", "lambda1"),
-#legend.pos=c(4,0.18,4,0.8,4,0.2,4,0.09,4,0.7,4,0.21))
+fit0 <- semiMarkov(data = asthma[asthma$Severity==0,],
+        states = states_1, mtrans = mtrans_1)
+fit1 <- semiMarkov(data = asthma[asthma$Severity==1,],
+        states = states_1, mtrans = mtrans_1)
+lambda0<-hazard (fit0, type = "lambda",s=0,t=5,Length=1000)
+lambda1<-hazard (fit1, type = "lambda",s=0,t=5,Length=1000)
+plot(lambda0,lambda1, names = c("lambda0", "lambda1"),
+legend.pos=c(4,0.18,4,0.8,4,0.2,4,0.09,4,0.7,4,0.21))
 
 ## semi-Markov model with covariate "BMI"
-#fitcov <- semiMarkov(data = asthma, cov = as.data.frame(asthma$BMI),
-#        states = states_1, mtrans = mtrans_1)
-#lambda0<-hazard (fitcov, type = "lambda",cov = c(0))
-#lambda1<-hazard (fitcov, type = "lambda",cov = c(1))
-#plot(lambda0,lambda1, names = c("lambda0", "lambda1"))
+fitcov <- semiMarkov(data = asthma, cov = as.data.frame(asthma$BMI),
+        states = states_1, mtrans = mtrans_1)
+lambda0<-hazard (fitcov, type = "lambda",cov = c(0))
+lambda1<-hazard (fitcov, type = "lambda",cov = c(1))
+plot(lambda0,lambda1, names = c("lambda0", "lambda1"))
+
 }
 }
 \keyword{ documentation }

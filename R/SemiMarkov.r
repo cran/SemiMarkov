@@ -58,7 +58,6 @@ s_0<-0
 for(i in 1:dim(mtrans)[1]){
 if( all(mtrans[i,]==F))s_0<-s_0+1
 for(j in 1:dim(mtrans)[2]){
- 
 if(i!=j && mtrans[i,j]==FALSE && paste(i,j)%in%unique(paste(data[,2],data[,3])))stop("All observed transitions in data must be specified in matrix 'mtrans'")
 }}
 
@@ -254,10 +253,9 @@ if(s>2){
 for(i in 1:(length(pos)-1)){
 
 if(pos[[i]][[1]]==pos[[i+1]][[1]])pos.temp[length(pos.temp)+1]<-pos[i]
-#if(i>1){
-#if(pos[[i]][[1]]!=pos[[i+1]][[1]] && pos[[i]][[1]]!=pos[[i-1]][[1]])pos.temp[length(pos.temp)+1]<-pos[i]
-#}
-}
+if(i>1){
+if(pos[[i]][[1]]!=pos[[i+1]][[1]] && pos[[i]][[1]]!=pos[[i-1]][[1]])pos.temp[length(pos.temp)+1]<-pos[i]
+}}
 pos<-pos.temp
 
 npos<-c(length(pos))
@@ -546,6 +544,7 @@ V<-function(x){
 logdensity<-log(.dens(nprob,mtrans,dist,data1[,4],r,cov1, x,parameters)[indic1])
 logmarginal<-log(.marg(nprob,mtrans,dist,data2[,4],r,cov2,x,parameters)[indic2])
 
+
 return(-1*(sum(logdensity) + sum(logmarginal)))
 }}
 else{
@@ -558,14 +557,37 @@ logmarginal<-log(.marg_trans(nprob,mtrans,dist,data2[,4],dim(cov)[2],cov2,x,cov_
 }
 }
 
+#number of states with probabilities to estimate
+###########
 
+#nstate_estim<-c()
+#k<-1
+#state<-states[k]
+#nline<-c()
+#if(length(states)>2 && nprob>1){
+#for(i in (ndist+1):(ndist+nprob-1)){
+#state <-substring(parameters[i,2],first=1,last=1)
+#  if(i==(ndist+1)){trans<-1}
+#else {trans<-0}
+#print(nprob)
+#  if(substring(parameters[i+1,2],first=1,last=1)!=state){
+#    trans<-1
+#  }
+#
+#nline<-c(nline,trans)
+#}}
+#else trans<-0
+##state<-states[k]
+##nstate_estim<-c(nstate_estim,state)
+#
+#nstate_estim<-length(nline[which(nline==1)])
 
 if(length(r)>1 || r>0)ncov<-length(parameters[(ndist+nprob+1):dim(parameters)[1],1])
 else ncov<-0
 ##########
 #optimisation
 ###########
-
+#print(parameters)
 if(length(states)>2){
 #constraints for optimisation
 	hin<-function(par){
@@ -593,6 +615,9 @@ if(length(states)>2){
 
 		}
 	h<-c(vec_contr)
+	#for(i in 1:length(h)){if(h[i]<0)h[i]<-0.01}
+	#print(cbind(V(par),h))
+
 	
 		
 	return(h)
@@ -821,10 +846,8 @@ semiMarkovobject<-list(minus2loglik=objective[-1],
 #################
 
 if(nprob>0){
-transitionsP<-paste(substring(parameters[(e+w+ew+1):(e+w+ew+nprob),2],first=1,last=1),"->",substring(parameters[(e+w+ew+1):(e+w+ew+nprob),2],first=2,last=2))
-trP<-paste(substring(parameters[(e+w+ew+1):(e+w+ew+nprob),2],first=1,last=1),substring(parameters[(e+w+ew+1):(e+w+ew+nprob),2],first=2,last=2),sep="")
-
-
+transitionsP<-paste(substring(parameters[(e+w+ew+1):(e+w+ew++nprob),2],first=1,last=1),"->",substring(parameters[(e+w+ew++1):(e+w+ew++nprob),2],first=2,last=2))
+trP<-paste(substring(parameters[(e+w+ew++1):(e+w+ew++nprob),2],first=1,last=1),substring(parameters[(e+w+ew++1):(e+w+ew++nprob),2],first=2,last=2),sep="")
 
 which<-c()
 for(i in 1:length(trP)){
@@ -833,20 +856,8 @@ which<-c(which,a)}
 
 
 trP<-trans.hj[-which]
-transitions_other <- paste(substring(trP[1:length(trP)],first=1,last=1),"->",substring(trP[1:length(trP)],first=2,last=2))
-#for last transitions in the data
-transitions_last <- c()
-which_unique <-c()
-for(i in 1:length(transitions_other)){
-  if(substring(transitions_other[i],first=1,last=1)%in%substring(parameters$transit[(e+w+ew+1):(e+w+ew+nprob)],first=1,last=1)){
-    transitions_last<-c(transitions_last,transitions_other[i])}
-  else{which_unique<-c(which_unique,i)}
-}
+transitionsP<-c(transitionsP,paste(substring(trP[1:length(trP)],first=1,last=1),"->",substring(trP[1:length(trP)],first=2,last=2)))
 
-#for cases when only one transition in a row
-transitions_unique <- transitions_other[which_unique]
-
-transitionsP<-c(transitionsP,transitions_last,transitions_unique)
 
 ################
 # Statistics for the proba 1-pr
@@ -871,29 +882,19 @@ for(i in 1:s_trans){
 licz<-length(which(substring(parameters[(e+w+ew+1):(e+w+ew+nprob),2],first=1,last=1)==states[which_rows[i]]))
 
 if(is.matrix(macierz) && licz>0){
- 
-if(macierz[(1:licz),(1:licz)][1]>=0){
-
+if(all(macierz[(1:licz),(1:licz)]>=0)){
 SD_last<-c(SD_last,sum(as.matrix(macierz[(1:licz),(1:licz)])))}
-else{  SD_last<-c(SD_last,NaN)}
+else{SD_last<-c(SD_last,NaN)}
 macierz<-macierz[-(1:licz),-(1:licz)]
 }
-else if(licz>0){
-  SD_last<-c(SD_last,macierz)}
+else{SD_last<-c(SD_last,macierz)}
 }
-
-SD_last <- SD_last[1:length(unique(substring(parameters$transit[(e+w+ew+1):(e+w+ew+nprob)],first=1,last=1)))]
 SD_last<-round(sqrt(SD_last),2)
-if(length(trP)>length(SD_last)){
-SD_addit <- length(trP)-length(SD_last)
-}else{
-  SD_addit <- 0.00
-}
+
 ############
 # table proba
 #############
-
-table.probabilities<-data.frame(Index=c(1:nprob,rep('-',ss)),Transition=transitionsP,Probability=c(solution[(e+w+ew+1):(e+w+ew+nprob)],rep(1,length(trP))),SD=c(sd[(e+w+ew+1):(e+w+ew+nprob)],SD_last,rep('-',SD_addit)),
+table.probabilities<-data.frame(Index=c(1:nprob,rep('-',ss)),Transition=transitionsP,Probability=c(solution[(e+w+ew+1):(e+w+ew+nprob)],rep(0,length(trP))),SD=c(sd[(e+w+ew+1):(e+w+ew+nprob)],SD_last),
 				Lower_CI=rep('-',nprob+length(trP)),Upper_CI=rep('-',nprob+length(trP)),Wald_H0=rep('-',nprob+length(trP)),Wald_test=rep('-',nprob+length(trP)),
 				p_value=rep('-',nprob+length(trP)))
 
@@ -1132,18 +1133,15 @@ if(!all(all %in% c(TRUE,FALSE)))
 	stop("'all' must be of logical value")
 tables<-list()
 for(i in 1:nrow(object$table.dist[[1]])){
-
-
-name<-paste(as.character(object$table.dist[[1]][i,3]),"; ",object$Transition_matrix[as.numeric(substring(object$table.dist[[1]][i,3],first=1,last=1)),as.numeric(substring(object$table.dist[[1]][i,3],first=6,last=6))],"distribution")
-
-table<-data.frame(Parameter=object$table.param[which(object$table.param[,4]==object$table.dist[[1]][i,3]),3],
-	Estimation=object$table.param[which(object$table.param[,4]==object$table.dist[[1]][i,3]),5],
-	SD=object$table.param[which(object$table.param[,4]==object$table.dist[[1]][i,3]),6],
-	Lower_CI=object$table.param[which(object$table.param[,4]==object$table.dist[[1]][i,3]),7],
-	Upper_CI=object$table.param[which(object$table.param[,4]==object$table.dist[[1]][i,3]),8],
-	Wald_H0=object$table.param[which(object$table.param[,4]==object$table.dist[[1]][i,3]),9],
-	Wald_statistic=object$table.param[which(object$table.param[,4]==object$table.dist[[1]][i,3]),10],
-	Wald_p.value=object$table.param[which(object$table.param[,4]==object$table.dist[[1]][i,3]),11]
+name<-paste(as.character(object$table.dist[[1]][i,1]),"; ",object$Transition_matrix[as.numeric(substring(object$table.dist[[1]][i,1],first=1,last=1)),as.numeric(substring(object$table.dist[[1]][i,1],first=6,last=6))],"distribution")
+table<-data.frame(Parameter=object$table.param[which(object$table.param[,2]==object$table.dist[[1]][i,1]),1],
+	Estimation=object$table.param[which(object$table.param[,2]==object$table.dist[[1]][i,1]),3],
+	SD=object$table.param[which(object$table.param[,2]==object$table.dist[[1]][i,1]),4],
+	Lower_CI=object$table.param[which(object$table.param[,2]==object$table.dist[[1]][i,1]),5],
+	Upper_CI=object$table.param[which(object$table.param[,2]==object$table.dist[[1]][i,1]),6],
+	Wald_H0=object$table.param[which(object$table.param[,2]==object$table.dist[[1]][i,1]),7],
+	Wald_statistic=object$table.param[which(object$table.param[,2]==object$table.dist[[1]][i,1]),8],
+	Wald_p.value=object$table.param[which(object$table.param[,2]==object$table.dist[[1]][i,1]),9]
 )
 
 tables[[name]]<-table
@@ -1288,7 +1286,21 @@ result[changeInf]<-1e+307
 result
 
 }
+.densityE2<-function(t,cova,cova.mat,sigma,beta=0)
+{
+if(cova!=FALSE){z<-exp(as.matrix(cova.mat)%*%matrix(beta,ncol=1))
+}else{z<-1}
+change<-which(z==Inf)
+z[change]<-1e+307
+result<-(1/sigma)*z*(exp(-t/sigma)^z)
 
+change<-which(result<1e-320)
+result[change]<-1e-320
+changeInf<-which((1/sigma)*z==Inf)
+result[changeInf]<-1e+307
+result
+print(result)
+}
 .survivalE<-function(t,cova,cova.mat,sigma,beta=0)
 {if(cova!=FALSE){z<-exp(as.matrix(cova.mat)%*%matrix(beta,ncol=1))
 }else{z<-1}
@@ -1307,7 +1319,8 @@ result
 {if(cova!=FALSE){z<-exp(as.matrix(cova.mat)%*%matrix(beta,ncol=1))
 }else{z<-1}
 result<-exp(-t/sigma)^z
-
+#print("resultSurvivlE")
+#print(result)
 change<-which(result==0)
 result[change]<-1e-320
 
@@ -1318,7 +1331,7 @@ result
 {if(cova!=FALSE){z<-exp(as.matrix(cova.mat)%*%matrix(beta,ncol=1))
 }else{z<-1}
 result<-(1/sigma)^z
-
+print(paste('result=',t))
 change<-which(result==0)
 result[change]<-1e-320
 
@@ -1387,14 +1400,14 @@ if(d[i+j+k]==1){
 ##Exponential
 marg_row_el<-c(marg_row_el+(x[ndist+i+j+m]*.survivalE(t,covariates,cova, sigma=x[i+j+k],beta=beta_init)))
 
-
+#if(any(x[ndist+i+j+m]*.survivalE(t,covariates,cova, sigma=x[i+j+k],beta=beta_init)<0))print("whyE")
 }
 if(d[i+j+k]==2){
 #Weibull
 
 k2<-k2+1
 marg_row_el<-c(marg_row_el+(x[ndist+i+j+m]*.survivalW(t,covariates,cova, sigma=x[i+j+k],nu=x[e+k2],beta=beta_init)))
-
+#if(any(x[ndist+i+j+m]*.survivalW(t,covariates,cova, sigma=x[i+j+k],nu=x[e+k2],beta=beta_init)<0))print("whyW")
 }
 if(d[i+j+k]==3){
 #Exponentiated Weibull
@@ -1439,7 +1452,7 @@ g<-j-1
 k<-k+f
 
 m<-m+g
-
+#print(marg_row_el)
 
 marg_row<-c(marg_row,marg_row_el)}
 else if(tr_in_row>0){
@@ -1570,7 +1583,7 @@ dens_row_el<-c(((1-pr)*.densityEW(t,covariates,cova, sigma=x[i+j+k],nu=x[e+k2],t
 pr<-0
 }
 
-
+#print(log(dens_row_el))
 dens_row<-c(dens_row,dens_row_el)
 
 f<-j
@@ -1589,7 +1602,7 @@ for(l in 0:(dim(cova)[2]-1)){beta_init[length(beta_init+1)+1]<-c(x[ndist+s+k+i+j
 if(d[i+j+k]==1){
 ##Exponential
 dens_row_el<-c(.densityE(t,covariates,cova, sigma=x[i+j+k],beta=beta_init))
-
+#print(.densityE(t,covariates,cova, sigma=x[i+j+k],beta=beta_init))
 }
 if(d[i+j+k]==2){
 ##Weibull
@@ -1624,6 +1637,12 @@ matrix(dens_row,ncol=1)
 
 
 }
+
+
+
+
+
+
 ###########################################################################################################################################
 
 ###################################
@@ -1796,6 +1815,177 @@ m<-m+g
 marg_row<-c(marg_row,marg_row_el)}
 }
 matrix(marg_row,ncol=1)
+}
+
+
+
+.marg2_trans<-function(s,trans,d,t,covariates,cova, x,cov_pos,parameters)
+{
+
+##number of transitions
+p<-length(which(trans!=FALSE))
+
+#Total number of covariates
+dim<-dim(cova)[1]
+
+## ndist
+ndist<-length(which(parameters[,1]%in%c("sigma","nu","theta")))
+
+# number of parameters e, w ,ew
+ew<-length(which(parameters[,1]=="theta"))
+w<-length(which(parameters[,1]=="nu"))
+e<-length(which(parameters[,1]=="sigma"))
+
+#marginal contribution to likelihood
+marg_row<-c()
+
+#auxillary indices
+k2<-0
+k3<-0
+k<-0
+n<-0
+m<-0
+#loop for the rows
+for(i in 1:(dim(trans)[1])){
+
+#number of transitions in a row i
+tr_in_row<-length(which(trans[i,]!=FALSE))
+
+#marginal contribution for a row
+marg_row_el<-rep(0,length(t))
+
+#cumulated probability in a row
+pr<-0
+
+
+#Check if the transition occurs as a parameter for the probability
+
+if(tr_in_row>0 && ndist+i+m<=dim(parameters)[1] && substring(parameters[i+k,2],first=1,last=1)==substring(parameters[ndist+i+m,2],first=1,last=1)&& parameters[ndist+i+m,1]=="P")
+{
+
+for(j in 0:(tr_in_row-1)){
+#vector of covariates for a transition
+#Check if we consider this transition for the covariates
+if(all((i+j+k) %in% cov_pos)){
+transition<-parameters[i+j+k,2]
+
+which_beta<-intersect(which(parameters[,2]==transition),which(substring(parameters[,1],first=1,last=1)=="B"))
+beta_init<-x[which_beta]
+which_cova<-as.numeric(substring(parameters[which_beta,1],first=5,last=5))
+
+cova_temp<-cova[,which_cova]
+covariates_temp<-length(beta_init)
+}else{
+#If we do not consider this covariates we do not have the coefficient Beta
+beta_init<-NA
+cova_temp<-rep(0,dim)
+covariates_temp<-0}
+
+#marginal contribution for a row if the transition is not the last in the row
+if(j!=(tr_in_row-1)){
+
+if(d[i+j+k]==1){
+##Exponential
+marg_row_el<-c(marg_row_el+(x[ndist+i+j+m]*.survivalE(t,covariates_temp,cova_temp,  sigma=x[i+j+k],beta=beta_init)))
+}
+if(d[i+j+k]==2){
+#Weibull
+k2<-k2+1
+marg_row_el<-c(marg_row_el+(x[ndist+i+j+m]*.survivalW(t,covariates_temp,cova_temp,  sigma=x[i+j+k],nu=x[e+k2],beta=beta_init)))
+}
+if(d[i+j+k]==3){
+#Exponentiated Weibull
+k2<-k2+1
+k3<-k3+1
+marg_row_el<-c(marg_row_el+(x[ndist+i+j+m]*.survivalEW(t,covariates_temp,cova_temp,  sigma=x[i+j+k],nu=x[e+k2],theta=x[e+w+k3],beta=beta_init)))
+
+}
+
+pr<-pr+x[ndist+i+j+m]
+if(pr>1){
+pr<-0.999}
+
+}else{
+
+if(d[i+j+k]==1){
+##Exponential
+marg_row_el<-c(marg_row_el+((1-pr)*.survivalE(t,covariates_temp,cova_temp,   sigma=x[i+j+k],beta=beta_init)))
+
+}
+if(d[i+j+k]==2){
+##Weibull
+k2<-k2+1
+marg_row_el<-c(marg_row_el+((1-pr)*.survivalW(t,covariates_temp,cova_temp,  sigma=x[i+j+k],nu=x[e+k2],beta=beta_init)))
+
+}
+if(d[i+j+k]==3){
+##Exponentiated Weibull
+k3<-k3+1
+k2<-k2+1
+marg_row_el<-c(marg_row_el+((1-pr)*.survivalEW(t,covariates_temp,cova_temp,  sigma=x[i+j+k],nu=x[e+k2],theta=x[e+w+k3],beta=beta_init)))
+
+}
+
+
+f<-j
+g<-j-1
+}}
+k<-k+f
+m<-m+g
+marg_row<-c(marg_row,marg_row_el)}
+else if(tr_in_row>0){
+
+##If the probability is not a parameter, so it always equals to 1
+
+for(j in 0:(tr_in_row-1)){
+#vector of covariates for a transition 
+beta_init<-c()
+
+#Check if we consider this transition for the covariates
+
+if(all((i+j+k) %in% cov_pos)){
+transition<-parameters[i+j+k,2]
+which_beta<-intersect(which(parameters[,2]==transition),which(substring(parameters[,1],first=1,last=1)=="B"))
+beta_init<-x[which_beta]
+which_cova<-as.numeric(substring(parameters[which_beta,1],first=5,last=5))
+
+cova_temp<-cova[,which_cova]
+covariates_temp<-length(beta_init)}else{
+#If we do not consider this covariates we do not have the coefficient Beta
+beta_init<-NA
+cova_temp<-rep(0,dim)
+covariates_temp<-0}
+if(d[i+j+k]==1){
+##Exponential
+marg_row_el<-c(marg_row_el+.survivalE(t,covariates_temp,cova_temp,sigma=x[i+j+k],beta=beta_init))
+}
+if(d[i+j+k]==2){
+##Weibull
+k2<-k2+1
+marg_row_el<-c(marg_row_el+.survivalW(t,covariates_temp,cova_temp,sigma=x[i+j+k],nu=x[e+k2],beta=beta_init))
+
+}
+if(d[i+j+k]==3){
+##Exponentiated Weibull
+k2<-k2+1
+k3<-k3+1
+marg_row_el<-c(marg_row_el+.survivalEW(t,covariates_temp,cova_temp,sigma=x[i+j+k],nu=x[e+k2],theta=x[e+w+k3],beta=beta_init))
+
+}
+
+f<-j
+g<-j-1
+}
+
+k<-k+f
+m<-m+g
+
+marg_row<-c(marg_row,marg_row_el)}
+}
+
+matrix(marg_row,ncol=1)
+
+print(paste('marg_row',matrix(marg_row,ncol=1)))
 }
 
 
@@ -2281,7 +2471,6 @@ if(!missing(proba_init) && !missing(mtrans) && length(proba_init)!=length(which(
 	stop("The length of 'proba_init' must be the same as the number of possible transitions in the matrix 'mtrans'")
 #number of states
 s<-length(states)
-
 if(!missing(cens)){
 for(i in 1:dim(data)[1]){
 if(data[i,3]==cens){
@@ -2292,7 +2481,6 @@ stop("The censure is not the last state of individuals")}
 }
 trans.h<-data[data[,2]!=data[,3],2]
 trans.j<-data[data[,2]!=data[,3],3]
-
 if(missing(cens)){
 trans.cens<-data[data[,2]==data[,3],3]}
 else{
@@ -2419,10 +2607,9 @@ dist<-as.numeric(dist)
 if(s>2){
 for(i in 1:(length(pos)-1)){
 if(pos[[i]][[1]]==pos[[i+1]][[1]])pos.temp[length(pos.temp)+1]<-pos[i]
-#if(i>1){
-#if(pos[[i]][[1]]!=pos[[i+1]][[1]] && pos[[i]][[1]]!=pos[[i-1]][[1]])pos.temp[length(pos.temp)+1]<-pos[i]
-#}
-}
+if(i>1){
+if(pos[[i]][[1]]!=pos[[i+1]][[1]] && pos[[i]][[1]]!=pos[[i-1]][[1]])pos.temp[length(pos.temp)+1]<-pos[i]
+}}
 pos<-pos.temp
 
 npos<-c(length(pos))
@@ -2479,7 +2666,7 @@ ew<-ew+1
 trans.ew<-c(trans.ew,trans.hj[i])}}
 ndist<-e+w+ew
 
-
+#print(matrix.P)
 #Matrix of the Parametres
 # p parametres nu
 # p parametres sigma
@@ -2704,7 +2891,8 @@ if(dist[i]=="Exponential"){
 distribution[i]<-"Exponential"
 x<- .hazardE(time,FALSE,0, object1[i,3])
 x<-as.vector(x)
-}
+print('x')
+print(object1[i,3])}
 #Weibull distribution
 else if(dist[i]=="Weibull"){
 distribution[i]<-"Weibull"
@@ -2722,11 +2910,11 @@ x<-as.vector(x)
 v_temp[,i]<-x
 }
 table<-as.matrix(summary(v_temp[,1]))
-if(length(vec)>1){
+
 for(i in 2:length(vec)){
 
 table<-cbind(table,summary(v_temp[,i]))
-}}
+}
 colnames(table)<-vec
 v<-list(vector=v_temp,Time=time,Covariates=NA,Summary=table,Transition_matrix=object$Transition_matrix,call=Names,Type=type,cova=cov)
 ###############################
@@ -2883,10 +3071,9 @@ k<-k+f
 m<-m+g
 }
 table<-as.matrix(summary(v_temp[,1]))
-if(length(vec)>1){
 for(i in 2:length(vec)){
 table<-cbind(table,summary(v_temp[,i]))
-}}
+}
 colnames(table)<-vec
 v<-list(vector=v_temp,Time=time,Covariates=NA,Summary=table,Transition_matrix=object$Transition_matrix,call=Names,Type=type,cova=cov)
 }
