@@ -296,7 +296,7 @@ fit1 <- semiMarkov(data = asthma, states = states_1, mtrans = mtrans_1)
 
 ## semi-Markov model with one covariate 
 ## "BMI" affects all transitions
-BMI <- as.data.frame(asthma\$BMI)
+BMI <- as.data.frame(asthma$BMI)
 fit2 <- semiMarkov(data = asthma, cov = BMI, states = states_1, mtrans = mtrans_1)
 ## semi-Markov model with one covariate 
 ## "BMI" affects the transitions "1->3" and "3->1"

@@ -1,6 +1,6 @@
-ab4a9a39c01a236e9e4836a811c53d86 *DESCRIPTION
+96242ca55982b2bcad82862fb836e272 *DESCRIPTION
 820eaec326841e3e108553b8dcfd6c0e *NAMESPACE
-16fed67c480080d62070efc1924cb327 *R/SemiMarkov.r
+1bafcd32ee9e24c72657cc9e2ec75c18 *R/SemiMarkov.r
 c242cbed48872be710f08f90bfd8d4f5 *data/asthma.rda
 483e4748c4fc21559f5b393282eafdc0 *inst/CITATION
 987026579ddb7885ac500c958ae6e68f *man/asthma.rd
@@ -9,7 +9,7 @@ c4d410dca5c7dc89b0deadf32d01534d *man/param.init.Rd
 dd29896f6edb6b953e28af73489b7e91 *man/plot.hazard.Rd
 ff676ba34a87b42bea60afe11e96cfd2 *man/print.hazard.Rd
 3e3ed00bb9a67fa7bcf94bbf3f896995 *man/print.semiMarkov.Rd
-51b4883f61cced9db9bf3e97fad10f92 *man/semiMarkov.Rd
+aa87614e50ce2f7e2ff28e826979658a *man/semiMarkov.Rd
 613fa65894d9a8009d1c54eda05c244f *man/summary.hazard.Rd
 abd4bd222398d2b7a0f6b29ecb4738e9 *man/summary.semiMarkov.Rd
 fe32bb8e931c8e9e346164bb09969fdc *man/table.state.rd
