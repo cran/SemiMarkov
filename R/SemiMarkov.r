@@ -247,11 +247,9 @@ if(dist[i]%in%c("EW","EWeibull","Exponentiated Weibull"))dist[i]<-3}
 dist<-as.numeric(dist)
 
 pos.temp<-list()
-
 #deleting the last transitions in the row from the calculations of P
 if(s>2){
 for(i in 1:(length(pos)-1)){
-
 if(pos[[i]][[1]]==pos[[i+1]][[1]])pos.temp[length(pos.temp)+1]<-pos[i]
 if(i>1){
 if(pos[[i]][[1]]==pos[[i+1]][[1]])pos.temp[length(pos.temp)+1]<-pos[i]# && pos[[i]][[1]]!=pos[[i-1]][[1]]
@@ -259,12 +257,12 @@ if(pos[[i]][[1]]==pos[[i+1]][[1]])pos.temp[length(pos.temp)+1]<-pos[i]# && pos[[
 pos<-unique(pos.temp)
 
 npos<-c(length(pos))
-for(i in 1:length(pos)){
 
+if(length(pos.temp)>=1){
+for(i in 1:length(pos)){
 npos[i]<-as.character(paste(pos[[i]][[1]],pos[[i]][[2]],sep=""))
 }
-}
-
+}else{npos <- NULL}}
 ##auxilary matrice of logical values
 mtrans.log<-matrix(FALSE,ncol=s,nrow=s)
 for(i in 1:dim(mtrans)[1]){
@@ -275,8 +273,7 @@ if(mtrans[i,j]!=FALSE)mtrans.log[i,j]<-TRUE
 #number of probabilites in the parameters matrix
 proba_new<-c()
 proba<-proba_init
-
-if(length(states)>2){
+if(length(states)>2 & length(npos)>0){
 	nprob<-length(npos)
 
 	for(i in 1:s){
@@ -294,7 +291,6 @@ if(length(states)>2){
 	}
 else{nprob<-0
 npos<-c()}
-
 
 
 if(!missing(proba_init)){
@@ -535,7 +531,6 @@ cov_pos<-c(cov_pos,position)}}
 if(length(cov_pos)>0){
 cov_pos<-sort(position)}
 
-
 ################
 #likelihood
 ################
@@ -652,9 +647,14 @@ if(length(states)>2){
 	
 
 if(length(states)>3){
-
+  if(nprob>1){
 res <- solnp( pars = parameters[,3], fun=V,eqfun=eqfun1,eqB=rep(0,length(eqfun)),ineqfun=hin,ineqUB=c(rep(1,length(hin(parameters[,3])))),ineqLB=rep(0,length(hin(parameters[,3]))),
                      LB=ineq_low, UB=ineq_up,control = control)
+}else{
+  res <- solnp( pars = parameters[,3], fun=V,eqfun=eqfun1,eqB=rep(0,length(eqfun)),
+                LB=ineq_low, UB=ineq_up,control = control)
+  
+  }
 
 }
 else{

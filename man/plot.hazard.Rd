@@ -91,7 +91,7 @@ Agnieszka Listwon-Krol
 \link{hazard}, \link{semiMarkov}
 }
 \examples{
-\dontrun{
+\donttest{
 
 
 ## Asthma control data

@@ -278,7 +278,7 @@ Agnieszka Listwon-Krol, Philippe Saint-Pierre
 }
 \examples{
 
-\dontrun{
+\donttest{
 
 ## Asthma control data
 data(asthma)
