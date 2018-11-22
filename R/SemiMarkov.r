@@ -1341,7 +1341,7 @@ result
 
 .marg<-function(s,trans,d,t,covariates, cova,x,parameters)
 {
-
+  
 ##number of transitions
 p<-length(which(trans!=FALSE))
 ## ndist
@@ -1421,7 +1421,8 @@ pr<-0
 if(d[i+j+k]==2){
 ##Weibull
 k2<-k2+1
-marg_row_el<-c(marg_row_el+((1-pr)*.survivalW(t,covariates,cova,  sigma=x[i+j+k],nu=x[e+i+j+k],beta=beta_init)))
+#print(paste(k2,i+j+k,x[e+i+j+k], x[e+k2]))
+marg_row_el<-c(marg_row_el+((1-pr)*.survivalW(t,covariates,cova,  sigma=x[i+j+k],nu=x[e+k2],beta=beta_init)))
 
 pr<-0
 }
@@ -2910,7 +2911,7 @@ v<-list(vector=v_temp,Time=time,Covariates=NA,Summary=table,Transition_matrix=ob
 ##SM hazard rate
 ################################
 }else{
-r<-1
+r<-1;rr<-1
 ## ndist
 ndist<-length(which(object$param.init[,1]%in%c("sigma","nu","theta")))
 # number of parameters e, w ,ew
@@ -2927,12 +2928,14 @@ k3<-0
 k<-0
 m<-0
 for(i in 1:s){
+  y0 <- 0
 tr_in_row<-0
 for(z in 1:tr){
 if(substring(object1[z,2],first=1,last=1)==as.character(i)){
 tr_in_row<-tr_in_row+1}}
 marg_row_el<-rep(0,length(time))
 pr<-0
+pr0 <- 0
 for(j in 0:(tr_in_row-1)){
 if(j!=(tr_in_row-1)){
 if(dist[i+j+k]=="Exponential"){
@@ -2940,14 +2943,24 @@ if(dist[i+j+k]=="Exponential"){
 ##	Exponential distribution
 ########################################
 marg_row_el<-c(marg_row_el)+c(object1[ndist+i+j+m,3]*.survivalE(time,FALSE,0, sigma=object1[i+j+k,3]))
-pr<-pr+object1[ndist+i+j+m,3]}
-else if(dist[i+j+k]=="Weibull"){
+pr<-pr+object1[ndist+i+j+m,3]
+  
+  x0<- .densityE(time, FALSE,0,  object1[i+j+k,3])*object1[ndist+i+j+m,3]
+  pr0<-pr0+object1[ndist+i+j+m,3]
+  
+}else if(dist[i+j+k]=="Weibull"){
 #########################################
 ##	Weibull distribution
 ########################################
 k2<-k2+1
 marg_row_el<-c(marg_row_el)+c(object1[ndist+i+j+m,3]*.survivalW(time,FALSE,0, sigma=object1[i+j+k,3],nu=object1[e+k2,3]))
+#print(paste(" m j!=(tr_in_row-1)",i,j,tr_in_row-1,marg_row_el[1]))
 pr<-pr+object1[ndist+i+j+m,3]
+
+x0<- .densityW(time, FALSE,0,  object1[i+j+k,3], object1[e+k2,3])*object1[ndist+i+j+m,3]
+#print(paste(" d j!=(tr_in_row-1)",i,j,tr_in_row-1,x0[1]))
+pr0<-pr0+object1[ndist+i+j+m,3]
+
 }
 else if(dist[i+j+k]=="Exponentiated Weibull"){
 #########################################
@@ -2957,19 +2970,36 @@ k2<-k2+1
 k3<-k3+1
 marg_row_el<-c(marg_row_el)+c(object1[ndist+i+j+m,3]*.survivalEW(time,FALSE,0, sigma=object1[i+j+k,3],nu=object1[e+k2,3],theta=object1[e+w+k3,3]))
 pr<-pr+object1[ndist+i+j+m,3]
+
+x0<- .densityEW(time, FALSE,0,  object1[i+j+k,3], object1[e+k2,3],object1[e+w+k3,3])*object1[ndist+i+j+m,3]
+pr0<-pr0+object1[ndist+i+j+m,3]
+
 }
+ # print(paste(" x0 y0 j!=(tr_in_row-1)",r,x0[1],y0[1]))
+  z0<-x0#/y0
+  z0<-as.vector(z0)
+  v_temp[,r]<-z0
+  r<-r+1
+  
+  
 }else{
 if(dist[i+j+k]=="Exponential"){
 #########################################
 ##	Exponential distribution
 ########################################
-marg_row_el<-c(marg_row_el)+c((1-pr)*.survivalE(time,FALSE,0,  sigma=object1[i+j+k,3]))}
+marg_row_el<-c(marg_row_el)+c((1-pr)*.survivalE(time,FALSE,0,  sigma=object1[i+j+k,3]))
+x0<- .densityE(time, FALSE,0,   object1[i+j+k,3])*(1-pr0)
+}
 else if(dist[i+j+k]=="Weibull"){
 #########################################
 ##	Weibull distribution
 ########################################
 k2<-k2+1
 marg_row_el<-c(marg_row_el)+c((1-pr)*.survivalW(time,FALSE,0,  sigma=object1[i+j+k,3],nu=object1[e+k2,3]))
+#print(paste("m j==(tr_in_row-1)",i,j,tr_in_row-1,marg_row_el[1]))
+x0<- .densityW(time, FALSE,0,   object1[i+j+k,3], object1[e+k2,3])*(1-pr0)
+#print(paste(" d j==(tr_in_row-1)",i,j,tr_in_row-1,x0[1]))
+
 }
 else if(dist[i+j+k]=="Exponentiated Weibull"){
 #########################################
@@ -2978,6 +3008,8 @@ else if(dist[i+j+k]=="Exponentiated Weibull"){
 k2<-k2+1
 k3<-k3+1
 marg_row_el<-c(marg_row_el)+c((1-pr)*.survivalEW(time,FALSE,0,  sigma=object1[i+j+k,3],nu=object1[e+k2,3],theta=object1[e+w+k3,3]))
+x0<- .densityEW(time, FALSE,0,   object1[i+j+k,3], object1[e+k2,3],object1[e+w+k3,3])*(1-pr0)
+
 }
 f<-j
 g<-j-1
@@ -2986,79 +3018,99 @@ g<-j-1
 k<-k+f
 m<-m+g
 y0<-y0+marg_row_el
-}
-k<-0
-m<-0
-k2<-0
-k3<-0
-for(i in 1:s){
-tr_in_row<-0
-for(z in 1:tr){
-if(substring(object1[z,2],first=1,last=1)==as.character(i)){
-tr_in_row<-tr_in_row+1}}
-pr0<-0
-for(j in 0:(tr_in_row-1)){
-if(j!=(tr_in_row-1)){
-if(dist[i+j+k]=="Exponential"){
-#########################################
-##	Exponential distribution
-########################################
-x0<- .densityE(time, FALSE,0,  object1[i+j+k,3])*object1[ndist+i+j+m,3]
-pr0<-pr0+object1[ndist+i+j+m,3]}
-else if(dist[i+j+k]=="Weibull"){
-#########################################
-##	Weibull distribution
-#########################################
-k2<-k2+1
-x0<- .densityW(time, FALSE,0,  object1[i+j+k,3], object1[e+k2,3])*object1[ndist+i+j+m,3]
-pr0<-pr0+object1[ndist+i+j+m,3]
-}
-else if(dist[i+j+k]=="Exponentiated Weibull"){
-#########################################
-##	Exponentiated Weibull distribution
-########################################
-k2<-k2+1
-k3<-k3+1
-x0<- .densityEW(time, FALSE,0,  object1[i+j+k,3], object1[e+k2,3],object1[e+w+k3,3])*object1[ndist+i+j+m,3]
-pr0<-pr0+object1[ndist+i+j+m,3]
-}
-z0<-x0/y0
+
+#print(paste(" x0 y0 j==(tr_in_row-1)",r,x0[1],y0[1]))
+#z0<-x0/y0
+#z0<-as.vector(z0)
+#f<-j
+#g<-j-1
+#v_temp[,r]<-z0
+#r<-r+1
+
+z0<-x0#/y0
 z0<-as.vector(z0)
+#f<-j
+#g<-j-1
 v_temp[,r]<-z0
+v_temp[,rr:r] <-v_temp[,rr:r]/y0
 r<-r+1
-}else{
-if(dist[i+j+k]=="Exponential"){
+rr <- r
+}
+#k<-0
+#m<-0
+#k2<-0
+#k3<-0
+#for(i in 1:s){
+#tr_in_row<-0
+#for(z in 1:tr){
+#if(substring(object1[z,2],first=1,last=1)==as.character(i)){
+#tr_in_row<-tr_in_row+1}}
+#pr0<-0
+#for(j in 0:(tr_in_row-1)){
+#if(j!=(tr_in_row-1)){
+#if(dist[i+j+k]=="Exponential"){
+##########################################
+###	Exponential distribution
 #########################################
-##	Exponential distribution
-########################################
-x0<- .densityE(time, FALSE,0,   object1[i+j+k,3])*(1-pr0)}
-else if(dist[i+j+k]=="Weibull"){
+#x0<- .densityE(time, FALSE,0,  object1[i+j+k,3])*object1[ndist+i+j+m,3]
+#pr0<-pr0+object1[ndist+i+j+m,3]}
+#else if(dist[i+j+k]=="Weibull"){
+##########################################
+###	Weibull distribution
+##########################################
+#k2<-k2+1
+#x0<- .densityW(time, FALSE,0,  object1[i+j+k,3], object1[e+k2,3])*object1[ndist+i+j+m,3]
+#print(paste(" d j!=(tr_in_row-1)",i,j,tr_in_row-1,x0[1]))
+#pr0<-pr0+object1[ndist+i+j+m,3]
+#}
+#else if(dist[i+j+k]=="Exponentiated Weibull"){
+##########################################
+###	Exponentiated Weibull distribution
 #########################################
-##	Weibull distribution
-########################################
-k2<-k2+1
-x0<- .densityW(time, FALSE,0,   object1[i+j+k,3], object1[e+k2,3])*(1-pr0)
-}
-else if(dist[i+j+k]=="Exponentiated Weibull"){
+#k2<-k2+1
+#k3<-k3+1
+#x0<- .densityEW(time, FALSE,0,  object1[i+j+k,3], object1[e+k2,3],object1[e+w+k3,3])*object1[ndist+i+j+m,3]
+#pr0<-pr0+object1[ndist+i+j+m,3]
+#}
+#  print(paste(" d j==(tr_in_row-1)",r,x0[1],y0[1]))
+#z0<-x0/y0
+#z0<-as.vector(z0)
+#v_temp[,r]<-z0
+#r<-r+1
+#}else{
+#if(dist[i+j+k]=="Exponential"){
+##########################################
+###	Exponential distribution
 #########################################
-##	Exponentiated Weibull distribution
-########################################
-k2<-k2+1
-k3<-k3+1
-x0<- .densityEW(time, FALSE,0,   object1[i+j+k,3], object1[e+k2,3],object1[e+w+k3,3])*(1-pr0)
-}
-				
-z0<-x0/y0
-z0<-as.vector(z0)
-f<-j
-g<-j-1
-v_temp[,r]<-z0
-r<-r+1
-}
-}
-k<-k+f
-m<-m+g
-}
+#x0<- .densityE(time, FALSE,0,   object1[i+j+k,3])*(1-pr0)}
+#else if(dist[i+j+k]=="Weibull"){
+##########################################
+###	Weibull distribution
+#########################################
+#k2<-k2+1
+#x0<- .densityW(time, FALSE,0,   object1[i+j+k,3], object1[e+k2,3])*(1-pr0)
+#print(paste(" d j==(tr_in_row-1)",i,j,tr_in_row-1,x0[1]))
+#}
+#else if(dist[i+j+k]=="Exponentiated Weibull"){
+##########################################
+###	Exponentiated Weibull distribution
+#########################################
+#k2<-k2+1
+#k3<-k3+1
+#x0<- .densityEW(time, FALSE,0,   object1[i+j+k,3], object1[e+k2,3],object1[e+w+k3,3])*(1-pr0)
+#}
+#  print(paste(" d j==(tr_in_row-1)",r,x0[1],y0[1]))
+#z0<-x0/y0
+#z0<-as.vector(z0)
+#f<-j
+#g<-j-1
+#v_temp[,r]<-z0
+#r<-r+1
+#}
+#}
+#k<-k+f
+#m<-m+g
+#}
 table<-as.matrix(summary(v_temp[,1]))
 if(length(vec)>1){
 for(i in 2:length(vec)){
@@ -3255,13 +3307,15 @@ y0<-0
 k3<-0
 k<-0
 m<-0
-r<-1
+r<-1;rr <- 1
 for(i in 1:s){
+  y0<-0
 tr_in_row<-0
 for(z in 1:tr){
 if(substring(object1[z,2],first=1,last=1)==as.character(i)){
 tr_in_row<-tr_in_row+1}}
 pr<-0
+
 marg_row_el<-rep(0,length(time))
 for(j in 0:(tr_in_row-1)){
 #which and how many covariates for this transition
@@ -3279,114 +3333,13 @@ if(substring(object1[i+j+k,2],first=1,last=1)==tr.h && substring(object1[i+j+k,2
 if(dist[i+j+k]=="Exponential"){
 
 ##	Exponential distribution
-
+   
 #covariate
 if(!is.na(which1[1])){
 marg_row_el<-c(marg_row_el)+c(object1[ndist+i+j+m,3]*.survivalE(time,how_many,COVA[,which1], sigma=object1[i+j+k,3],object1[which2,3]))
-}else{
-marg_row_el<-c(marg_row_el)+c(object1[ndist+i+j+m,3]*.survivalE(time,FALSE,0, sigma=object1[i+j+k,3]))
-}
-pr<-pr+object1[ndist+i+j+m,3]
-}
-else if(dist[i+j+k]=="Weibull"){
-k2<-k2+1
-
-##	Weibull distribution
-
-if(!is.na(which1[1])){
-marg_row_el<-c(marg_row_el)+c(object1[ndist+i+j+m,3]*.survivalW(time,how_many,COVA[,which1], sigma=object1[i+j+k,3],nu=object1[e+k2,3],object1[which2,3]))
-}else{
-marg_row_el<-c(marg_row_el)+c(object1[ndist+i+j+m,3]*.survivalW(time,FALSE,0, sigma=object1[i+j+k,3],nu=object1[e+k2,3]))
-}
-pr<-pr+object1[ndist+i+j+m,3]
-}
-else if(dist[i+j+k]=="Exponentiated Weibull"){
-k2<-k2+1
-k3<-k3+1
-
-##	Exponentiated Weibull distribution
-
-if(!is.na(which1[1])){
-marg_row_el<-c(marg_row_el)+c(object1[ndist+i+j+m,3]*.survivalEW(time,how_many,COVA[,which1], sigma=object1[i+j+k,3],nu=object1[e+k2,3],theta=object1[e+w+k3,3],object1[which2,3]))
-}else{
-marg_row_el<-c(marg_row_el)+c(object1[ndist+i+j+m,3]*.survivalEW(time,FALSE,0, sigma=object1[i+j+k,3],nu=object1[e+k2,3],theta=object1[e+w+k3,3]))
-}
-pr<-pr+object1[ndist+i+j+m,3]
-}		
-}
-}else{
-if(dist[i+j+k]=="Exponential"){
-
-##	Exponential distribution
-
-#covariate?
-if(!is.na(which1[1])){
-marg_row_el<-c(marg_row_el)+c((1-pr)*.survivalE(time,how_many,COVA[,which1], sigma=object1[i+j+k,3],object1[which2,3]))
-}else{
-marg_row_el<-c(marg_row_el)+c((1-pr)*.survivalE(time,FALSE,0, sigma=object1[i+j+k,3]))
-}
-}
-else if(dist[i+j+k]=="Weibull"){
-k2<-k2+1
-
-##	Weibull distribution
-
-if(!is.na(which1[1])){
-marg_row_el<-c(marg_row_el)+c((1-pr)*.survivalW(time,how_many,COVA[,which1], sigma=object1[i+j+k,3],nu=object1[e+k2,3],object1[which2,3]))
-}else{
-marg_row_el<-c(marg_row_el)+c((1-pr)*.survivalW(time,FALSE,0, sigma=object1[i+j+k,3],nu=object1[e+k2,3]))
-}
-}
-else if(dist[i+j+k]=="Exponentiated Weibull"){
-k2<-k2+1
-k3<-k3+1
-
-##	Exponentiated Weibull distribution
-
-if(!is.na(which1[1])){
-marg_row_el<-c(marg_row_el)+c((1-pr)*.survivalEW(time,how_many,COVA[,which1], sigma=object1[i+j+k,3],nu=object1[e+k2,3],theta=object1[e+w+k3,3],object1[which2,3]))
-}else{
-marg_row_el<-c(marg_row_el)+c((1-pr)*.survivalEW(time,FALSE,0, sigma=object1[i+j+k,3],nu=object1[e+k2,3],theta=object1[e+w+k3,3]))
-}
-}	
-}
-}
-k<-k+j
-m<-m+j-1
-y0<-y0+marg_row_el
-}
-k<-0
-m<-0
-k2<-0
-k3<-0
-for(i in 1:s){
-tr_in_row<-0
-for(z in 1:tr){
-if(substring(object1[z,2],first=1,last=1)==as.character(i)){
-tr_in_row<-tr_in_row+1}}
-pr<-0
-for(j in 0:(tr_in_row-1)){
-
-#which and how many covariates for this transition
-which2<-which(object1[i+j+k,2]==object1[(ndist+p+1):dim(object1)[1],2])+ndist+p
-which1<-c()
-for(t in 1:length(which2)){
-which1<-c(which1,as.numeric(substring(object1[which2[t],1],first=5,last=nchar(as.character(object1[which2[t],1])))))}
-how_many<-length(which(object1[(ndist+p+1):dim(object1)[1],2]==object1[i+j+k,2]))
-#which transition
-tr.h<- as.numeric(substring(trans_unique[i+j+k],first=1,last=1))	
-tr.j<- as.numeric(substring(trans_unique[i+j+k],first=2,last=2))
-if(j!=(tr_in_row-1)){
-if(substring(object1[i+j+k,2],first=1,last=1)==tr.h && substring(object1[i+j+k,2],first=2,last=2)==tr.j)
-				{
-if(dist[i+j+k]=="Exponential"){
-
-##	Exponential distribution
-
-#covariate?
-if(!is.na(which1[1])){
 x0<- .densityE(time,how_many,COVA[,which1],  object1[i+j+k,3],object1[which2,3])*object1[ndist+i+j+m,3]
 }else{
+marg_row_el<-c(marg_row_el)+c(object1[ndist+i+j+m,3]*.survivalE(time,FALSE,0, sigma=object1[i+j+k,3]))
 x0<- .densityE(time,FALSE,0,  object1[i+j+k,3])*object1[ndist+i+j+m,3]
 }
 pr<-pr+object1[ndist+i+j+m,3]
@@ -3397,8 +3350,10 @@ k2<-k2+1
 ##	Weibull distribution
 
 if(!is.na(which1[1])){
+marg_row_el<-c(marg_row_el)+c(object1[ndist+i+j+m,3]*.survivalW(time,how_many,COVA[,which1], sigma=object1[i+j+k,3],nu=object1[e+k2,3],object1[which2,3]))
 x0<- .densityW(time,how_many,COVA[,which1],  object1[i+j+k,3], object1[e+k2,3],object1[which2,3])*object1[ndist+i+j+m,3]
 }else{
+marg_row_el<-c(marg_row_el)+c(object1[ndist+i+j+m,3]*.survivalW(time,FALSE,0, sigma=object1[i+j+k,3],nu=object1[e+k2,3]))
 x0<- .densityW(time,FALSE,0,  object1[i+j+k,3], object1[e+k2,3])*object1[ndist+i+j+m,3]
 }
 pr<-pr+object1[ndist+i+j+m,3]
@@ -3410,22 +3365,31 @@ k3<-k3+1
 ##	Exponentiated Weibull distribution
 
 if(!is.na(which1[1])){
+marg_row_el<-c(marg_row_el)+c(object1[ndist+i+j+m,3]*.survivalEW(time,how_many,COVA[,which1], sigma=object1[i+j+k,3],nu=object1[e+k2,3],theta=object1[e+w+k3,3],object1[which2,3]))
 x0<- .densityEW(time,how_many,COVA[,which1],  object1[i+j+k,3], object1[e+k2,3],object1[e+w+k3,3],object1[which2,3])*object1[ndist+i+j+m,3]
 }else{
+marg_row_el<-c(marg_row_el)+c(object1[ndist+i+j+m,3]*.survivalEW(time,FALSE,0, sigma=object1[i+j+k,3],nu=object1[e+k2,3],theta=object1[e+w+k3,3]))
 x0<- .densityEW(time,FALSE,0,  object1[i+j+k,3], object1[e+k2,3],object1[e+w+k3,3])*object1[ndist+i+j+m,3]
 }
 pr<-pr+object1[ndist+i+j+m,3]
 }		
 }
+#  print(paste("j!=(tr_in_row-1)", r,x0[1],y0[1]))
+  z0<-x0#/y0
+  z0<-as.vector(z0)
+  v_temp[,r]<-z0
+  r<-r+1
 }else{
 if(dist[i+j+k]=="Exponential"){
 
 ##	Exponential distribution
-
+ 
 #covariate?
 if(!is.na(which1[1])){
+marg_row_el<-c(marg_row_el)+c((1-pr)*.survivalE(time,how_many,COVA[,which1], sigma=object1[i+j+k,3],object1[which2,3]))
 x0<- .densityE(time,how_many,COVA[,which1],  object1[i+j+k,3],object1[which2,3])*(1-pr)
 }else{
+marg_row_el<-c(marg_row_el)+c((1-pr)*.survivalE(time,FALSE,0, sigma=object1[i+j+k,3]))
 x0<- .densityE(time,FALSE,0,  object1[i+j+k,3])*(1-pr)
 }
 }
@@ -3435,8 +3399,10 @@ k2<-k2+1
 ##	Weibull distribution
 
 if(!is.na(which1[1])){
+marg_row_el<-c(marg_row_el)+c((1-pr)*.survivalW(time,how_many,COVA[,which1], sigma=object1[i+j+k,3],nu=object1[e+k2,3],object1[which2,3]))
 x0<- .densityW(time,how_many,COVA[,which1],  object1[i+j+k,3], object1[e+k2,3],object1[which2,3])*(1-pr)
 }else{
+marg_row_el<-c(marg_row_el)+c((1-pr)*.survivalW(time,FALSE,0, sigma=object1[i+j+k,3],nu=object1[e+k2,3]))
 x0<- .densityW(time,FALSE,0,  object1[i+j+k,3], object1[e+k2,3])*(1-pr)
 }
 }
@@ -3445,23 +3411,140 @@ k2<-k2+1
 k3<-k3+1
 
 ##	Exponentiated Weibull distribution
-########################################
+
 if(!is.na(which1[1])){
+marg_row_el<-c(marg_row_el)+c((1-pr)*.survivalEW(time,how_many,COVA[,which1], sigma=object1[i+j+k,3],nu=object1[e+k2,3],theta=object1[e+w+k3,3],object1[which2,3]))
 x0<- .densityEW(time,how_many,COVA[,which1],  object1[i+j+k,3], object1[e+k2,3],object1[e+w+i+j+k,3],object1[which2,3])*(1-pr)
 }else{
+marg_row_el<-c(marg_row_el)+c((1-pr)*.survivalEW(time,FALSE,0, sigma=object1[i+j+k,3],nu=object1[e+k2,3],theta=object1[e+w+k3,3]))
 x0<- .densityEW(time,FALSE,0,  object1[i+j+k,3], object1[e+k2,3],object1[e+w+k3,3])*(1-pr)
 }
 }	
+  f<-j
+  g<-j-1
 }
-z0<-x0/y0
+}
+k<-k+f
+m<-m+g
+#print(paste("j==(tr_in_row-1)", rr,r,x0[1],y0[1],marg_row_el[1]))
+y0<-y0+marg_row_el
+print(paste(i,k,m,j,z,tr,x0[1],y0[1]))
+z0<-x0#/y0
 z0<-as.vector(z0)
-
+#f<-j
+#g<-j-1
 v_temp[,r]<-z0
+v_temp[,rr:r] <-v_temp[,rr:r]/y0
 r<-r+1
+rr <- r
 }
-k<-k+j
-m<-m+j-1
-}
+#k<-0
+#m<-0
+#k2<-0
+#k3<-0
+#for(i in 1:s){
+#tr_in_row<-0
+#for(z in 1:tr){
+#if(substring(object1[z,2],first=1,last=1)==as.character(i)){
+#tr_in_row<-tr_in_row+1}}
+#pr<-0
+#for(j in 0:(tr_in_row-1)){
+#
+##which and how many covariates for this transition
+#which2<-which(object1[i+j+k,2]==object1[(ndist+p+1):dim(object1)[1],2])+ndist+p
+#which1<-c()
+#for(t in 1:length(which2)){
+#which1<-c(which1,as.numeric(substring(object1[which2[t],1],first=5,last=nchar(as.character(object1[which2[t],1])))))}
+#how_many<-length(which(object1[(ndist+p+1):dim(object1)[1],2]==object1[i+j+k,2]))
+##which transition
+#tr.h<- as.numeric(substring(trans_unique[i+j+k],first=1,last=1))	
+#tr.j<- as.numeric(substring(trans_unique[i+j+k],first=2,last=2))
+#if(j!=(tr_in_row-1)){
+#if(substring(object1[i+j+k,2],first=1,last=1)==tr.h && substring(object1[i+j+k,2],first=2,last=2)==tr.j)
+#				{
+#if(dist[i+j+k]=="Exponential"){
+#
+###	Exponential distribution
+#
+##covariate?
+#if(!is.na(which1[1])){
+#x0<- .densityE(time,how_many,COVA[,which1],  object1[i+j+k,3],object1[which2,3])*object1[ndist+i+j+m,3]
+#}else{
+#x0<- .densityE(time,FALSE,0,  object1[i+j+k,3])*object1[ndist+i+j+m,3]
+#}
+#pr<-pr+object1[ndist+i+j+m,3]
+#}
+#else if(dist[i+j+k]=="Weibull"){
+#k2<-k2+1
+#
+###	Weibull distribution
+#
+#if(!is.na(which1[1])){
+#x0<- .densityW(time,how_many,COVA[,which1],  object1[i+j+k,3], object1[e+k2,3],object1[which2,3])*object1[ndist+i+j+m,3]
+#}else{
+#x0<- .densityW(time,FALSE,0,  object1[i+j+k,3], object1[e+k2,3])*object1[ndist+i+j+m,3]
+#}
+#pr<-pr+object1[ndist+i+j+m,3]
+#}
+#else if(dist[i+j+k]=="Exponentiated Weibull"){
+#k2<-k2+1
+#k3<-k3+1
+#
+###	Exponentiated Weibull distribution
+#
+#if(!is.na(which1[1])){
+#x0<- .densityEW(time,how_many,COVA[,which1],  object1[i+j+k,3], object1[e+k2,3],object1[e+w+k3,3],object1[which2,3])*object1[ndist+i+j+m,3]
+#}else{
+#x0<- .densityEW(time,FALSE,0,  object1[i+j+k,3], object1[e+k2,3],object1[e+w+k3,3])*object1[ndist+i+j+m,3]
+#}
+#pr<-pr+object1[ndist+i+j+m,3]
+#}		
+#}
+#}else{
+#if(dist[i+j+k]=="Exponential"){
+#
+###	Exponential distribution
+#
+##covariate?
+#if(!is.na(which1[1])){
+#x0<- .densityE(time,how_many,COVA[,which1],  object1[i+j+k,3],object1[which2,3])*(1-pr)
+#}else{
+#x0<- .densityE(time,FALSE,0,  object1[i+j+k,3])*(1-pr)
+#}
+#}
+#else if(dist[i+j+k]=="Weibull"){
+#k2<-k2+1
+#
+###	Weibull distribution
+#
+#if(!is.na(which1[1])){
+#x0<- .densityW(time,how_many,COVA[,which1],  object1[i+j+k,3], object1[e+k2,3],object1[which2,3])*(1-pr)
+#}else{
+#x0<- .densityW(time,FALSE,0,  object1[i+j+k,3], object1[e+k2,3])*(1-pr)
+#}
+#}
+#else if(dist[i+j+k]=="Exponentiated Weibull"){
+#k2<-k2+1
+#k3<-k3+1
+#
+###	Exponentiated Weibull distribution
+#########################################
+#if(!is.na(which1[1])){
+#x0<- .densityEW(time,how_many,COVA[,which1],  object1[i+j+k,3], object1[e+k2,3],object1[e+w+i+j+k,3],object1[which2,3])*(1-pr)
+#}else{
+#x0<- .densityEW(time,FALSE,0,  object1[i+j+k,3], object1[e+k2,3],object1[e+w+k3,3])*(1-pr)
+#}
+#}	
+#}
+#z0<-x0/y0
+#z0<-as.vector(z0)
+#
+#v_temp[,r]<-z0
+#r<-r+1
+#}
+#k<-k+j
+#m<-m+j-1
+#}
 table<-as.matrix(summary(v_temp[,1]))
 if(length(trans_unique)>1){
 for(i in 2:length(trans_unique)){
