@@ -325,7 +325,7 @@ ndist<-e+w+ew
 # sum(t)  initial probabilities of Markov chain
 # r coeff of regression Beta
 nbeta<-0
-if(length(r)>1 || r>0){
+if(length(r)>1 || any(r>0)){
 if(length_cov>=1){
 label_beta<-c()
 nbeta<-0
@@ -354,21 +354,21 @@ val_beta<-c()}
 
 
 if(!missing(dist_init)){
-	if(length(dist_init)!=ndist || dist_init[1:(ndist)]<=0 || !is.numeric(dist_init))	
+	if(length(dist_init)!=ndist || any(dist_init[1:(ndist)]<=0) || !all(is.numeric(dist_init)))	
 		stop("Wrong format of the vector 'dist_init'")
 }
 if(!missing(proba_init)){
-	if(length(proba_init)!=nprob || proba_init<=0 || proba_init>=1 || !is.numeric(proba_init))
+	if(length(proba_init)!=nprob || any(proba_init<=0) || any(proba_init>=1) || !all(is.numeric(proba_init)))
 		stop("Wrong format of the vector 'proba_init'")
 }
 if(!missing(coef_init)){
-	if(length(coef_init)!=nbeta || !is.numeric(coef_init))
+	if(length(coef_init)!=nbeta || !all(is.numeric(coef_init)))
 		stop("Wrong format of the vector 'coef_init'")
 }
 
 #Parameters for the Wald test
 if(!missing(Wald_par)){
-	if(length(Wald_par)!=ndist+nbeta || !is.numeric(Wald_par))	
+	if(length(Wald_par)!=ndist+nbeta || !all(is.numeric(Wald_par)))	
 		stop("Wrong format of the vector 'Wald_par'")
 }
 
@@ -477,7 +477,7 @@ temp2<-data.frame( transit=data[,6],covariable=cov)
 #data frame of parameters with columns Label, Transition and Value
 if(length(r)==1){
 if(r==0){l<-0
-} else if(length(r)>1 || r>0){l<-p}
+} else if(length(r)>1 || any(r>0)){l<-p}
 parameters<-data.frame(label=c(rep("sigma",e),rep("nu", w), rep("theta",ew),
  rep("P",nprob),label_beta ),
 transit=c(trans.e,trans.w,trans.ew,npos,trans_beta),
@@ -558,7 +558,7 @@ logmarginal<-log(.marg_trans(nprob,mtrans,dist,data2[,4],dim(cov)[2],cov2,x,cov_
 ###########
 
 
-if(length(r)>1 || r>0)ncov<-length(parameters[(ndist+nprob+1):dim(parameters)[1],1])
+if(length(r)>1 || any(r>0))ncov<-length(parameters[(ndist+nprob+1):dim(parameters)[1],1])
 else ncov<-0
 ##########
 #optimisation
@@ -956,7 +956,7 @@ semiMarkovobject$table.probabilities<-table.probabilities
 SD<-sd
 }
 
-if(length(r)>1 || r>0){
+if(length(r)>1 || any(r>0)){
 
 
 if(nprob>0){
@@ -994,7 +994,7 @@ semiMarkovobject$last<-last
 ###############
 #table.parameters
 
-if(length(r)>1 || r>0){
+if(length(r)>1 || any(r>0)){
 if(nprob>0){
  
   
@@ -1321,7 +1321,7 @@ result
 .hazardE<-function(t,cova,cova.mat,sigma,beta=0)
 {if(cova!=FALSE){z<-exp(as.matrix(cova.mat)%*%matrix(beta,ncol=1))
 }else{z<-1}
-result<-(1/sigma)^z
+result<-(1/sigma)*z
 change<-which(result==0)
 result[change]<-1e-320
 
@@ -2164,614 +2164,614 @@ matrix(dens_row,ncol=1)
 ###########################
 
 param.init<-function(data=NULL,cov=NULL,states,mtrans, cov_tra = NULL, cens = NULL,
-			dist_init=NULL, proba_init=NULL, coef_init=NULL){
-
-#length of cov_tra
-if(missing(cov_tra)){length_cov<-0}
-else{length_cov<-length(cov_tra)}
-
-#checking conditions
-if (missing(states))
-	stop("Argument 'states' is missing with no default")
-if (missing(mtrans))
-	stop("Argument 'mtrans' is missing with no default")
- if (nrow(mtrans) != ncol(mtrans)) 
-        stop("Argument 'mtrans' must be a quadratic  matrix.")
-## is mtrans a quadratic matrix
-if(!missing(mtrans) && nrow(mtrans)!=ncol(mtrans))stop("'mtrans' must be a quadratic matrix")
-
-if(!missing(proba_init) && !missing(mtrans) && length(proba_init)!=length(which(mtrans!="FALSE")))
-	stop("The length of 'proba_init' must be the same as the number of possible transitions in the matrix 'mtrans'")
-
-##transitions on diagonal
-k<-0
-for(i in 1:dim(mtrans)[1]){
-if(mtrans[i,i]!=FALSE)k<-k+1}
-if (!missing(mtrans) && k> 0) 
-       stop("Transitions into the same state are not allowed")
-if (nrow(mtrans) != length(states)) 
-        stop("The row number of 'mtrans' must be equal to the number of states.")
-if (length(states) != length(unique(states))) 
-        stop("The state names must be unique.")
-
-#do we operate on real data or not
-if (missing(data))
-###################################
-# no real data
-##################################
-{
-if(missing(proba_init))stop("Argument 'proba_init' is missing with no default")
-
-#number of the covariates r
-if(length_cov>=1){r<-c()
-for(i in 1:length_cov){
-r<-c(r,length(cov_tra[[i]]))
-cov_tra[[i]]<-sort(cov_tra[[i]])
-}
-cov<-as.matrix(cov)
-}else{
-if(!missing(coef_init)){
-r<-c()
-transitions<-length(which(mtrans!=FALSE))
-if(length(coef_init)%/%transitions-floor(length(coef_init)%/%transitions)!=0){stop("Wrong format of the argument 'coef_init'")}
-else{
-r<-length(coef_init)%/%transitions
-
-}}else{r<-0}}
-s<-length(states)
-#All observed transitions i!=j
-trans.hj<-c()
-for(i in 1:s){
-for(j in 1:s){
-if(mtrans[i,j]!=FALSE)trans.hj[length(trans.hj)+1]<-as.character(paste(states[i],states[j],sep=""))
-}}
-#All observed transitions i=j
-trans.hh<-c()
-for(i in 1:s){
-if(missing(cens)){
-trans.hh<-c(trans.hh,as.character(paste(states[i],states[i],sep="")))
-}else{
-trans.hh<-c(trans.hh,as.character(paste(states[i],cens,sep="")))
-}}
-a<-0
-for(i in 1:length(trans.hh)){
-
-for(j in 1:length(trans.hh)){
-if(length(trans.hh)>0 && mtrans[as.numeric(substring(trans.hh[i],first=1,last=1)),j]==FALSE){
-a<-a+1
-}
-if(a==length(trans.hh)){
-trans.hh2<-trans.hh[-which(as.numeric(substring(trans.hh,first=1,last=1))==i)]}}}
-trans.hh<-trans.hh2
-##auxilary matrice of logical values
-mtrans.log<-matrix(FALSE,ncol=s,nrow=s)
-for(i in 1:dim(mtrans)[1]){
-for(j in 1:dim(mtrans)[2]){
-if(mtrans[i,j]!=FALSE)mtrans.log[i,j]<-TRUE
-}}
-#Number of transitions to estimate
-p<-sum(1*mtrans.log)
-#Initialisation of the parameters
-#Initial Transition Matrix P
-#t vector of number of essential transitions in a row
-#npos vector fo all possible transitions
-t<-rep(0,s)
-pos<-list()
-npos<-c()
-dist<-c()
-matrix.P<-matrix(0,ncol=s, nrow=s)
-table.state<-matrix(ncol=s, nrow=s) 
-m<-1
-npos2<-matrix(0,nrow=s,ncol=s)
-for(i in 1:s){
-for (j in 1:s){
-if(mtrans[i,j]!=FALSE){
-dist<-c(dist,mtrans[i,j])
-matrix.P[i, j]<-proba_init[m]
-npos2[i,j]<-as.character(paste(i,j,sep=""))
-m<-m+1}
-else{matrix.P[i,j]<-0}
-}}
-##auxilary matrice of logical values
-mtrans.log<-matrix(FALSE,ncol=s,nrow=s)
-for(i in 1:dim(mtrans)[1]){
-for(j in 1:dim(mtrans)[2]){
-if(mtrans[i,j]!=FALSE)mtrans.log[i,j]<-TRUE
-}}
-#number of probabilites in the parameters matrix
-nprob<-0
-npos<-c()
-proba_new<-c()
-proba<-proba_init
-if(length(states)>2){
-for(i in 1:s){
-if(1*sum(mtrans.log[i,])>0){
-p_in_row<-1*sum(mtrans.log[i,])-1
-proba_new<-c(proba_new,proba[1:p_in_row])
-
-proba_new<-proba_new[1:(length(proba_new))]
-proba<-proba[(p_in_row+1):length(proba)]
-nprob<-nprob+1*sum(mtrans.log[i,])-1
-npos<-c(npos,npos2[i,which(npos2[i,]>0)])
-npos<-npos[1:(length(npos)-1)]
-}
-}
-}
-proba_init2<-proba_init
-proba_init<-proba_new
-## codes for distributions
-for(i in 1:length(dist)){
-if(dist[i]%in%c("E","Exp","Exponential"))dist[i]<-1
-if(dist[i]%in%c("W","Weibull"))dist[i]<-2
-if(dist[i]%in%c("EW","EWeibull","Exponentiated Weibull"))dist[i]<-3}
-dist<-as.numeric(dist)
-#Matrix of the Parametres
-# e parametres sigma
-# trans.e for which transitions
-# w parametres sigma
-# trans.w for which transitions
-# ew parameters theta
-# trans.ew for which transitions
-e<-0
-trans.e<-trans.hj
-w<-0
-trans.w<-c()
-ew<-0
-trans.ew<-c()
-for(i in 1:length(dist)){
-if(dist[i]==1)e<-e+1
-if(dist[i]==2){e<-e+1
-w<-w+1
-trans.w<-c(trans.w,trans.hj[i]) }
-if(dist[i]==3){e<-e+1
-w<-w+1
-trans.w<-c(trans.w,trans.hj[i])
-ew<-ew+1
-trans.ew<-c(trans.ew,trans.hj[i])}}
-ndist<-e+w+ew
-
-#Matrix of the Parametres
-# p parametres nu
-# p parametres sigma
-# p parametres teta
-# sum(t)  initial probabilities of Markov chain (tyle ile trzeba)
-# r coeff of regression Beta
-nbeta<-0
-if(length(r)>1 || r>0){
-if(length_cov>=1){
-label_beta<-c()
-nbeta<-0
-trans_beta<-c()
-val_beta<-c()
-for(i in 1:length(r)){
-label_beta<-c(label_beta,sort(rep(paste("Beta", i, sep=""), r[i])))
-nbeta<-nbeta+r[i]
-trans_beta<-c(trans_beta,cov_tra[[i]])
-val_beta<-rep(0,length(trans_beta))
-}
-}
-else{label_beta<-sort(rep(paste("Beta", 1:r, sep=""), p))
-nbeta<-p*r
-trans_beta<-rep(trans.hj,r)
-val_beta<-rep(0,p*r)
-}}
-else{
-label_beta<-c()
-trans_beta<-c()
-val_beta<-c()}
-#The initial parameters
-#checking if the vectors are OK
-
-if(!missing(dist_init)){
-	if(length(dist_init)!=ndist || dist_init[1:ndist]<=0 || !is.numeric(dist_init))	
-		stop("Wrong format of the vector 'dist_init'")
-}
-if(length(proba_init)!=nprob || proba_init<0 || proba_init>=1 || !is.numeric(proba_init))
-		stop("Wrong format of the vector 'proba_init'")
-if(!missing(coef_init)){
-	if(length(coef_init)!=nbeta || !is.numeric(coef_init))stop("Wrong format of the vector 'coef_init'")}
-if(r==0){l<-0
-} else if(length(r)>1 || r>0){l<-p}
-parameters<-data.frame(Label=c(rep("sigma",e),rep("nu", w), rep("theta",ew),
- rep("P",nprob),label_beta ),
-Transition=c(trans.e,trans.w,trans.ew,npos,trans_beta),
- Value=c(rep(1, e),rep(1,w),rep(1,ew),rep(0,nprob),val_beta))
-for(i in 1:s){
-for(j in 1:s){
-parameters$Value[parameters$Label=="P" & parameters$Transition==as.character(paste(states[i],states[j], sep=""))]<-matrix.P[i,j]
-}}
-if(!missing(dist_init))parameters[1:ndist,3]<-dist_init
-parameters[(ndist+1):(ndist+nprob),3]<-proba_init
-if(!missing(coef_init))parameters[(ndist+nprob+1):(ndist+nprob+nbeta),3]<-coef_init
-dimnames(matrix.P)<-list(states,states)
-message<-paste("Initial values for the Multi-State Semi-Markov Model for ", s," states")
-colnames(mtrans)<-states
-rownames(mtrans)<-states
-for(i in 1:length(states)){
-for(j in 1:length(states)){
-if(mtrans[i,j]==FALSE)mtrans[i,j]<-"-"
-if(mtrans[i,j]=="E")mtrans[i,j]<-"Exponential"
-if(mtrans[i,j]=="W")mtrans[i,j]<-"Weibull"
-if(mtrans[i,j]=="EW")mtrans[i,j]<-"Exponentiated Weibull"
-}}
-dimnames(table.state)<-list(states,states)
-
-if(missing(proba_init)){
-proba.init<-parameters[1:e,]
-proba_init2<-parameters[(ndist+1):(ndist+nprob),3]
-
-licznik<-1
-last_proba<-0
-for(i in 1:(e-1)){
-if(substring(parameters$Transition[i],first=1,last=1)==substring(parameters$Transition[i+1],first=1,last=1)){
-proba.init[i,3]<-proba_init2[licznik]
-last_proba<-last_proba+proba_init2[licznik]
-licznik<-licznik+1}
-else if(i<e-1){
-proba.init[i,3]<-1-last_proba
-last_proba<-0}
-if(i==e-1){
-
-proba.init[i+1,3]<-1-last_proba
-}
-}
-proba.init$Label<-"P"
-if(nbeta>0){
-coef.init <- parameters[(ndist+nprob+1):(ndist+nprob+nbeta),]
-rownames(coef.init) <- c(1:dim(coef.init)[1])
-param.init.object<-list(nstates=length(states), matrix.P=matrix.P, last=0, Transition_matrix=mtrans,dist.init=parameters[1:(ndist),],proba.init=proba.init,coef.init=coef.init)
-}else{
-param.init.object<-list(nstates=length(states), matrix.P=matrix.P, last=0, Transition_matrix=mtrans,dist.init=parameters[1:(ndist),],proba.init=proba.init)
-
-}}
-else{
-proba.init<-parameters[1:e,]
-proba.init$Label<-"P"
-for(i in 1:e){
-proba.init$Value[i]<-proba_init2[i]
-}
-if(nbeta>0){
-coef.init <- parameters[(ndist+nprob+1):(ndist+nprob+nbeta),]
-rownames(coef.init) <- c(1:dim(coef.init)[1])
-param.init.object<-list(nstates=length(states), matrix.P=matrix.P, last=0, Transition_matrix=mtrans,dist.init=parameters[1:(ndist),],proba.init=proba.init,coef.init=coef.init)
-}else{
-param.init.object<-list(nstates=length(states), matrix.P=matrix.P, last=0, Transition_matrix=mtrans,dist.init=parameters[1:(ndist),],proba.init=proba.init)
-
-}}
-}
-################################
-# with data
-################
-else{
-if (missing(cov) && missing(cov_tra)==FALSE && missing(proba_init))
-	stop("To indicate the transitions for covariates you need to define the covariates matrix")
-if(!missing(cov)){
-if(dim(data)[1]!=dim(cov)[1])
-	stop("Argument 'data' and 'cov' need to have the same number of rows")
-if(!is.data.frame(cov))
-	stop("Argument 'cov' must be a data.frame")}
-if(!is.data.frame(data))
-	stop("Argument 'data' must be a data.frame")
-if(!missing(cens) && !cens%in%data[,3])stop("Wrong format of the argument 'cens'")
-
-if(!missing(proba_init) && !missing(mtrans) && length(proba_init)!=length(which(mtrans!=FALSE)))
-	stop("The length of 'proba_init' must be the same as the number of possible transitions in the matrix 'mtrans'")
-#number of states
-s<-length(states)
-if(!missing(cens)){
-for(i in 1:dim(data)[1]){
-if(data[i,3]==cens){
-if(i<dim(data)[1] && data[i+1,1]==data[i,1]){
-stop("The censure is not the last state of individuals")}
-}
-}
-}
-trans.h<-data[data[,2]!=data[,3],2]
-trans.j<-data[data[,2]!=data[,3],3]
-if(missing(cens)){
-trans.cens<-data[data[,2]==data[,3],3]}
-else{
-trans.cens<-data[data[,3]==cens,3]}
-
-table.state<-matrix(ncol=s, nrow=s) 
-for(i in 1:s){
-for (j in 1:s){
-if(i!=j){
-table.state[i,j]<-1*(sum(1*(trans.h==states[i] & trans.j==states[j])))}
-else{table.state[i,j]<-1*(sum(1*(trans.cens==states[i])))}
-}
-}
-if(!missing(cens)){
-for(i in 1:dim(data)[1]){
-if(data[i,3]==cens){
-data[i,3]<-data[i,2]
-}
-}}
-#number of censured patients
-Ncens<-length(which(data[,2]==data[,3]))
-time.ind<-NA
-#number of the covariates r
-if(missing(cov)){r<-0
-cov=as.matrix(rep(0,dim(data)[1]))}
-else{
-if(length_cov>=1){r<-c()
-for(i in 1:length_cov){
-r<-c(r,length(cov_tra[[i]]))
-cov_tra[[i]]<-sort(cov_tra[[i]])
-}
-cov<-as.matrix(cov)
-}
-else{cov<-as.matrix(cov)
-r<-dim(cov)[2]
-}
-
-#we check if covariates are dependent from time
-time.ind<-rep(TRUE,dim(cov)[2])
-for(j in 1:dim(cov)[2]){
-l<-0
-for(i in 2:dim(cov)[1]){
-if(data[i,1]==data[i-1,1]){
-if(cov[i,j]!=cov[i-1,j]){
-time.ind[j]<-FALSE
-i<-dim(cov)[1]+1
-}}}}}
-
-#Construction of the variable that identyfies transitions to a different state
-#i!=j -> 1
-#i=j -> 0
-data[,5]<-1*(data[,2]!=data[,3])
-#Construction of the variable that specifies the transitions 
-data[,6]<-as.character(paste(data[,2], data[,3], sep=""))
-#All observed transitions i!=j
-trans.hj<-c()
-trans.hh<-c()
-for(i in 1:s){
-for(j in 1:s){
-if(mtrans[i,j]!=FALSE)trans.hj[length(trans.hj)+1]<-as.character(paste(states[i],states[j],sep=""))
-}}
-#All observed transitions i=j
-for(i in 1:s){
-trans.hh<-sort(unique(data[data[,5]==0,6]))
-}
-trans.hh2<-trans.hh
-for(i in 1:length(trans.hh)){
-a<-0
-for(j in 1:length(trans.hh)){
- 
-if(length(trans.hh)>0 && mtrans[as.numeric(substring(trans.hh[i],first=1,last=1)),j]==FALSE){
-a<-a+1
-}
-if(a==length(trans.hh)){
-trans.hh2<-trans.hh[-which(as.numeric(substring(trans.hh,first=1,last=1))==i)]}}}
-trans.hh<-trans.hh2
-##auxilary matrice of logical values
-mtrans.log<-matrix(FALSE,ncol=s,nrow=s)
-for(i in 1:dim(mtrans)[1]){
-for(j in 1:dim(mtrans)[2]){
-if(mtrans[i,j]!=FALSE)mtrans.log[i,j]<-TRUE
-}}
-#Number of transitions to estimate
-p<-sum(1*mtrans.log)
-#Initialisation of the parameters
-#Initial Transition Matrix P
-#t vector of number of essential transitions in a row
-#npos vector fo all possible transitions
-t<-rep(0,s)
-pos<-list()
-npos<-c()
-dist<-c()
-matrix.P<-matrix(ncol=s, nrow=s)
-#table.state<-matrix(ncol=s, nrow=s) 
-for(i in 1:s){
-k<-0
-for (j in 1:s){
-if(mtrans[i,j]!=FALSE){
-dist<-c(dist,mtrans[i,j])
-if(sum(1*(trans.h==states[i]))>0){
-matrix.P[i, j]<-1*(i!=j)*(sum(1*(trans.h==states[i] & trans.j==states[j]))/sum(1*(trans.h==states[i])))}
-else{matrix.P[i,j]<-0}
-k<-k+1
-pos[[length(pos)+1]]<-c(states[i],states[j])
-npos[length(npos)+1]<-as.character(paste(states[i],states[j],sep=""))
-}
-else{matrix.P[i,j]<-0}
-#if(i!=j){
-#table.state[i,j]<-1*(sum(1*(trans.h==states[i] & trans.j==states[j])))}
-#else{table.state[i,j]<-1*(sum(1*(trans.cens==states[i])))}
-}
-t[i]<-k
-}
-t<-t-1
-pos.temp<-list()
-## codes for distributions
-for(i in 1:length(dist)){
-if(dist[i]%in%c("E","Exp","Exponential"))dist[i]<-1
-if(dist[i]%in%c("W","Weibull"))dist[i]<-2
-if(dist[i]%in%c("EW","EWeibull","Exponentiated Weibull"))dist[i]<-3}
-dist<-as.numeric(dist)
-#deleting the last transitions in the row from the calculations of P
-
-if(s>2){
-for(i in 1:(length(pos)-1)){
-if(pos[[i]][[1]]==pos[[i+1]][[1]])pos.temp[length(pos.temp)+1]<-pos[i]
-if(i>1){
-if(pos[[i]][[1]]!=pos[[i+1]][[1]] && pos[[i]][[1]]!=pos[[i-1]][[1]])pos.temp[length(pos.temp)+1]<-pos[i]
-}}
-pos<-pos.temp
-
-npos<-c(length(pos))
-for(i in 1:length(pos)){
-
-npos[i]<-as.character(paste(pos[[i]][[1]],pos[[i]][[2]],sep=""))
-}
-#number of probabilites in the parameters matrix
-proba_new<-c()
-proba<-proba_init
-
-if(length(states)>2){
-nprob<-length(npos)
-for(i in 1:s){
-if(1*sum(mtrans.log[i,])>0){
-if(!missing(proba_init)){
-p_in_row<-1*sum(mtrans.log[i,])
-proba_new<-c(proba_new,proba[1:p_in_row])
-proba_new<-proba_new[1:(length(proba_new)-1)]
-
-proba<-proba[(p_in_row+1):length(proba)]}
-}
-}
-}}
-else{
-
-  nprob<-0
-npos<-c()}
-if(!missing(proba_init)){
-proba_init2<-proba_init
-proba_init<-proba_new}
-#Matrix of the Parametres
-# e parametres sigma
-# trans.e for which transitions
-# w parametres sigma
-# trans.w for which transitions
-# ew parameters theta
-# trans.ew for which transitions
-e<-0
-trans.e<-trans.hj
-w<-0
-trans.w<-c()
-ew<-0
-trans.ew<-c()
-for(i in 1:length(dist)){
-if(dist[i]==1)e<-e+1
-if(dist[i]==2){e<-e+1
-w<-w+1
-trans.w<-c(trans.w,trans.hj[i]) }
-if(dist[i]==3){e<-e+1
-w<-w+1
-trans.w<-c(trans.w,trans.hj[i])
-ew<-ew+1
-trans.ew<-c(trans.ew,trans.hj[i])}}
-ndist<-e+w+ew
-
-
-#Matrix of the Parametres
-# p parametres nu
-# p parametres sigma
-# p parametres teta
-# sum(t)  initial probabilities of Markov chain (tyle ile trzeba)
-# r coeff of regression Beta
-nbeta<-0
-if(length(r)>1 || r>0){
-if(length_cov>=1){
-label_beta<-c()
-nbeta<-0
-trans_beta<-c()
-val_beta<-c()
-for(i in 1:length(r)){
-label_beta<-c(label_beta,sort(rep(paste("Beta", i, sep=""), r[i])))
-nbeta<-nbeta+r[i]
-trans_beta<-c(trans_beta,cov_tra[[i]])
-val_beta<-rep(0,length(trans_beta))
-}
-
-}
-else{label_beta<-sort(rep(paste("Beta", 1:r, sep=""), p))
-nbeta<-p*r
-trans_beta<-rep(trans.hj,r)
-val_beta<-rep(0,p*r)
-}}
-else{
-label_beta<-c()
-trans_beta<-c()
-val_beta<-c()}
-
-temp2<-data.frame( Transition=data[,6],covariates=cov)
-#The initial parameters
-#checking if the vectors are OK
-
-if(!missing(dist_init)){
-	if(length(dist_init)!=ndist || dist_init[1:ndist]<=0 || !is.numeric(dist_init))	
-		stop("Wrong format of the vector 'dist_init'")
-}
-
-if(!missing(proba_init)){
-	if(length(proba_init)!=nprob || proba_init<0 || proba_init>=1 || !is.numeric(proba_init))
-		stop("Wrong format of the vector 'proba_init'")
-}
-
-if(!missing(coef_init)){
-	if(length(coef_init)!=nbeta || !is.numeric(coef_init))stop("Wrong format of the vector 'coef_init'")}
-
-if(r==0){l<-0
-} else if(length(r)>1 || r>0){l<-p}
-parameters<-data.frame(Label=c(rep("sigma",e),rep("nu", w), rep("theta",ew),
- rep("P",nprob),label_beta ),
-Transition=c(trans.e,trans.w,trans.ew,npos,trans_beta),
- Value=c(rep(1, e),rep(1,w),rep(1,ew),rep(0,nprob),val_beta))
-for(i in 1:s){
-for(j in 1:s){
-parameters$Value[parameters$Label=="P" & parameters$Transition==as.character(paste(states[i],states[j], sep=""))]<-matrix.P[i,j]
-}}
-if(!missing(dist_init))parameters[1:ndist,3]<-dist_init
-if(!missing(proba_init))parameters[(ndist+1):(ndist+nprob),3]<-proba_init
-if(!missing(coef_init))parameters[(ndist+nprob+1):(ndist+nprob+nbeta),3]<-coef_init
-
-dimnames(matrix.P)<-list(states,states)
-colnames(mtrans)<-states
-rownames(mtrans)<-states
-for(i in 1:length(states)){
-for(j in 1:length(states)){
-if(mtrans[i,j]==FALSE)mtrans[i,j]<-"-"
-if(mtrans[i,j]=="E")mtrans[i,j]<-"Exponential"
-if(mtrans[i,j]=="W")mtrans[i,j]<-"Weibull"
-if(mtrans[i,j]=="EW")mtrans[i,j]<-"Exponentiated Weibull"
-}}
-
-message<-paste("Initial values for the Multi-State Semi-Markov Model for ", s," states")
-dimnames(table.state)<-list(states,states)
-if(missing(proba_init)){
-proba.init<-parameters[1:e,]
-proba_init2<-parameters[(ndist+1):(ndist+nprob),3]
-licznik<-1
-last_proba<-0
-for(i in 1:(e-1)){
-if(substring(parameters$Transition[i],first=1,last=1)==substring(parameters$Transition[i+1],first=1,last=1)){
-proba.init[i,3]<-proba_init2[licznik]
-last_proba<-last_proba+proba_init2[licznik]
-licznik<-licznik+1}
-else if(i<e-1){
-proba.init[i,3]<-1-last_proba
-last_proba<-0}
-if(i==e-1){
-proba.init[i+1,3]<-1-last_proba
-}
-}
-proba.init$Label<-"P"
-if(nbeta>0){
-coef.init = parameters[(ndist+nprob+1):(ndist+nprob+nbeta),]
-rownames(coef.init) <- c(1:dim(coef.init)[1])
-param.init.object<-list(nstates=length(states), table.state=table.state, Ncens=Ncens, matrix.P=matrix.P,last=max(data[,4]),Transition_matrix=mtrans,dist.init=parameters[1:ndist,],proba.init=proba.init,coef.init=coef.init)
-}else{
-param.init.object<-list(nstates=length(states), table.state=table.state,  Ncens=Ncens, matrix.P=matrix.P,last=max(data[,4]),Transition_matrix=mtrans,dist.init=parameters[1:ndist,],proba.init=proba.init)
-}}
-else{
-proba.init<-parameters[1:e,]
-proba.init$Label<-"P"
-for(i in 1:e){
-proba.init$Value[i]<-proba_init2[i]
-}
-if(nbeta>0){
-coef.init = parameters[(ndist+nprob+1):(ndist+nprob+nbeta),]
-rownames(coef.init) <- c(1:dim(coef.init)[1])
-param.init.object<-list(nstates=length(states), table.state=table.state, Ncens=Ncens, matrix.P=matrix.P,last=max(data[,4]),Transition_matrix=mtrans,dist.init=parameters[1:ndist,],proba.init=proba.init,coef.init=coef.init)
-}else{
-
-param.init.object<-list(nstates=length(states), table.state=table.state,  Ncens=Ncens, matrix.P=matrix.P,last=max(data[,4]),Transition_matrix=mtrans,dist.init=parameters[1:ndist,],proba.init=proba.init)
-}}
-
-}
-class(param.init.object)<-"param.init"
-param.init.object
+                     dist_init=NULL, proba_init=NULL, coef_init=NULL){
+  
+  #length of cov_tra
+  if(missing(cov_tra)){length_cov<-0}
+  else{length_cov<-length(cov_tra)}
+  
+  #checking conditions
+  if (missing(states))
+    stop("Argument 'states' is missing with no default")
+  if (missing(mtrans))
+    stop("Argument 'mtrans' is missing with no default")
+  if (nrow(mtrans) != ncol(mtrans)) 
+    stop("Argument 'mtrans' must be a quadratic  matrix.")
+  ## is mtrans a quadratic matrix
+  if(!missing(mtrans) && nrow(mtrans)!=ncol(mtrans))stop("'mtrans' must be a quadratic matrix")
+  
+  if(!missing(proba_init) && !missing(mtrans) && length(proba_init)!=length(which(mtrans!="FALSE")))
+    stop("The length of 'proba_init' must be the same as the number of possible transitions in the matrix 'mtrans'")
+  
+  ##transitions on diagonal
+  k<-0
+  for(i in 1:dim(mtrans)[1]){
+    if(mtrans[i,i]!=FALSE)k<-k+1}
+  if (!missing(mtrans) && k> 0) 
+    stop("Transitions into the same state are not allowed")
+  if (nrow(mtrans) != length(states)) 
+    stop("The row number of 'mtrans' must be equal to the number of states.")
+  if (length(states) != length(unique(states))) 
+    stop("The state names must be unique.")
+  
+  #do we operate on real data or not
+  if (missing(data))
+    ###################################
+  # no real data
+  ##################################
+  {
+    if(missing(proba_init))stop("Argument 'proba_init' is missing with no default")
+    
+    #number of the covariates r
+    if(length_cov>=1){r<-c()
+    for(i in 1:length_cov){
+      r<-c(r,length(cov_tra[[i]]))
+      cov_tra[[i]]<-sort(cov_tra[[i]])
+    }
+    cov<-as.matrix(cov)
+    }else{
+      if(!missing(coef_init)){
+        r<-c()
+        transitions<-length(which(mtrans!=FALSE))
+        if(length(coef_init)%/%transitions-floor(length(coef_init)%/%transitions)!=0){stop("Wrong format of the argument 'coef_init'")}
+        else{
+          r<-length(coef_init)%/%transitions
+          
+        }}else{r<-0}}
+    s<-length(states)
+    #All observed transitions i!=j
+    trans.hj<-c()
+    for(i in 1:s){
+      for(j in 1:s){
+        if(mtrans[i,j]!=FALSE)trans.hj[length(trans.hj)+1]<-as.character(paste(states[i],states[j],sep=""))
+      }}
+    #All observed transitions i=j
+    trans.hh<-c()
+    for(i in 1:s){
+      if(missing(cens)){
+        trans.hh<-c(trans.hh,as.character(paste(states[i],states[i],sep="")))
+      }else{
+        trans.hh<-c(trans.hh,as.character(paste(states[i],cens,sep="")))
+      }}
+    a<-0
+    for(i in 1:length(trans.hh)){
+      
+      for(j in 1:length(trans.hh)){
+        if(length(trans.hh)>0 && mtrans[as.numeric(substring(trans.hh[i],first=1,last=1)),j]==FALSE){
+          a<-a+1
+        }
+        if(a==length(trans.hh)){
+          trans.hh2<-trans.hh[-which(as.numeric(substring(trans.hh,first=1,last=1))==i)]}}}
+    trans.hh<-trans.hh2
+    ##auxilary matrice of logical values
+    mtrans.log<-matrix(FALSE,ncol=s,nrow=s)
+    for(i in 1:dim(mtrans)[1]){
+      for(j in 1:dim(mtrans)[2]){
+        if(mtrans[i,j]!=FALSE)mtrans.log[i,j]<-TRUE
+      }}
+    #Number of transitions to estimate
+    p<-sum(1*mtrans.log)
+    #Initialisation of the parameters
+    #Initial Transition Matrix P
+    #t vector of number of essential transitions in a row
+    #npos vector fo all possible transitions
+    t<-rep(0,s)
+    pos<-list()
+    npos<-c()
+    dist<-c()
+    matrix.P<-matrix(0,ncol=s, nrow=s)
+    table.state<-matrix(ncol=s, nrow=s) 
+    m<-1
+    npos2<-matrix(0,nrow=s,ncol=s)
+    for(i in 1:s){
+      for (j in 1:s){
+        if(mtrans[i,j]!=FALSE){
+          dist<-c(dist,mtrans[i,j])
+          matrix.P[i, j]<-proba_init[m]
+          npos2[i,j]<-as.character(paste(i,j,sep=""))
+          m<-m+1}
+        else{matrix.P[i,j]<-0}
+      }}
+    ##auxilary matrice of logical values
+    mtrans.log<-matrix(FALSE,ncol=s,nrow=s)
+    for(i in 1:dim(mtrans)[1]){
+      for(j in 1:dim(mtrans)[2]){
+        if(mtrans[i,j]!=FALSE)mtrans.log[i,j]<-TRUE
+      }}
+    #number of probabilites in the parameters matrix
+    nprob<-0
+    npos<-c()
+    proba_new<-c()
+    proba<-proba_init
+    if(length(states)>2){
+      for(i in 1:s){
+        if(1*sum(mtrans.log[i,])>0){
+          p_in_row<-1*sum(mtrans.log[i,])-1
+          proba_new<-c(proba_new,proba[1:p_in_row])
+          
+          proba_new<-proba_new[1:(length(proba_new))]
+          proba<-proba[(p_in_row+1):length(proba)]
+          nprob<-nprob+1*sum(mtrans.log[i,])-1
+          npos<-c(npos,npos2[i,which(npos2[i,]>0)])
+          npos<-npos[1:(length(npos)-1)]
+        }
+      }
+    }
+    proba_init2<-proba_init
+    proba_init<-proba_new
+    ## codes for distributions
+    for(i in 1:length(dist)){
+      if(dist[i]%in%c("E","Exp","Exponential"))dist[i]<-1
+      if(dist[i]%in%c("W","Weibull"))dist[i]<-2
+      if(dist[i]%in%c("EW","EWeibull","Exponentiated Weibull"))dist[i]<-3}
+    dist<-as.numeric(dist)
+    #Matrix of the Parametres
+    # e parametres sigma
+    # trans.e for which transitions
+    # w parametres sigma
+    # trans.w for which transitions
+    # ew parameters theta
+    # trans.ew for which transitions
+    e<-0
+    trans.e<-trans.hj
+    w<-0
+    trans.w<-c()
+    ew<-0
+    trans.ew<-c()
+    for(i in 1:length(dist)){
+      if(dist[i]==1)e<-e+1
+      if(dist[i]==2){e<-e+1
+      w<-w+1
+      trans.w<-c(trans.w,trans.hj[i]) }
+      if(dist[i]==3){e<-e+1
+      w<-w+1
+      trans.w<-c(trans.w,trans.hj[i])
+      ew<-ew+1
+      trans.ew<-c(trans.ew,trans.hj[i])}}
+    ndist<-e+w+ew
+    
+    #Matrix of the Parametres
+    # p parametres nu
+    # p parametres sigma
+    # p parametres teta
+    # sum(t)  initial probabilities of Markov chain (tyle ile trzeba)
+    # r coeff of regression Beta
+    nbeta<-0
+    if(length(r)>1 || any(r>0)){
+      if(length_cov>=1){
+        label_beta<-c()
+        nbeta<-0
+        trans_beta<-c()
+        val_beta<-c()
+        for(i in 1:length(r)){
+          label_beta<-c(label_beta,sort(rep(paste("Beta", i, sep=""), r[i])))
+          nbeta<-nbeta+r[i]
+          trans_beta<-c(trans_beta,cov_tra[[i]])
+          val_beta<-rep(0,length(trans_beta))
+        }
+      }
+      else{label_beta<-sort(rep(paste("Beta", 1:r, sep=""), p))
+      nbeta<-p*r
+      trans_beta<-rep(trans.hj,r)
+      val_beta<-rep(0,p*r)
+      }}
+    else{
+      label_beta<-c()
+      trans_beta<-c()
+      val_beta<-c()}
+    #The initial parameters
+    #checking if the vectors are OK
+    
+    if(!missing(dist_init)){
+      if(length(dist_init)!=ndist || any(dist_init[1:ndist]<=0) || !all(is.numeric(dist_init)))	
+        stop("Wrong format of the vector 'dist_init'")
+    }
+    if(length(proba_init)!=nprob || any(proba_init<0) || any(proba_init>=1) || !all(is.numeric(proba_init)))
+      stop("Wrong format of the vector 'proba_init'")
+    if(!missing(coef_init)){
+      if(length(coef_init)!=nbeta || !all(is.numeric(coef_init)))stop("Wrong format of the vector 'coef_init'")}
+    if(r==0){l<-0
+    } else if(length(r)>1 || any(r>0)){l<-p}
+    parameters<-data.frame(Label=c(rep("sigma",e),rep("nu", w), rep("theta",ew),
+                                   rep("P",nprob),label_beta ),
+                           Transition=c(trans.e,trans.w,trans.ew,npos,trans_beta),
+                           Value=c(rep(1, e),rep(1,w),rep(1,ew),rep(0,nprob),val_beta))
+    for(i in 1:s){
+      for(j in 1:s){
+        parameters$Value[parameters$Label=="P" & parameters$Transition==as.character(paste(states[i],states[j], sep=""))]<-matrix.P[i,j]
+      }}
+    if(!missing(dist_init))parameters[1:ndist,3]<-dist_init
+    parameters[(ndist+1):(ndist+nprob),3]<-proba_init
+    if(!missing(coef_init))parameters[(ndist+nprob+1):(ndist+nprob+nbeta),3]<-coef_init
+    dimnames(matrix.P)<-list(states,states)
+    message<-paste("Initial values for the Multi-State Semi-Markov Model for ", s," states")
+    colnames(mtrans)<-states
+    rownames(mtrans)<-states
+    for(i in 1:length(states)){
+      for(j in 1:length(states)){
+        if(mtrans[i,j]==FALSE)mtrans[i,j]<-"-"
+        if(mtrans[i,j]=="E")mtrans[i,j]<-"Exponential"
+        if(mtrans[i,j]=="W")mtrans[i,j]<-"Weibull"
+        if(mtrans[i,j]=="EW")mtrans[i,j]<-"Exponentiated Weibull"
+      }}
+    dimnames(table.state)<-list(states,states)
+    
+    if(missing(proba_init)){
+      proba.init<-parameters[1:e,]
+      proba_init2<-parameters[(ndist+1):(ndist+nprob),3]
+      
+      licznik<-1
+      last_proba<-0
+      for(i in 1:(e-1)){
+        if(substring(parameters$Transition[i],first=1,last=1)==substring(parameters$Transition[i+1],first=1,last=1)){
+          proba.init[i,3]<-proba_init2[licznik]
+          last_proba<-last_proba+proba_init2[licznik]
+          licznik<-licznik+1}
+        else if(i<e-1){
+          proba.init[i,3]<-1-last_proba
+          last_proba<-0}
+        if(i==e-1){
+          
+          proba.init[i+1,3]<-1-last_proba
+        }
+      }
+      proba.init$Label<-"P"
+      if(nbeta>0){
+        coef.init <- parameters[(ndist+nprob+1):(ndist+nprob+nbeta),]
+        rownames(coef.init) <- c(1:dim(coef.init)[1])
+        param.init.object<-list(nstates=length(states), matrix.P=matrix.P, last=0, Transition_matrix=mtrans,dist.init=parameters[1:(ndist),],proba.init=proba.init,coef.init=coef.init)
+      }else{
+        param.init.object<-list(nstates=length(states), matrix.P=matrix.P, last=0, Transition_matrix=mtrans,dist.init=parameters[1:(ndist),],proba.init=proba.init)
+        
+      }}
+    else{
+      proba.init<-parameters[1:e,]
+      proba.init$Label<-"P"
+      for(i in 1:e){
+        proba.init$Value[i]<-proba_init2[i]
+      }
+      if(nbeta>0){
+        coef.init <- parameters[(ndist+nprob+1):(ndist+nprob+nbeta),]
+        rownames(coef.init) <- c(1:dim(coef.init)[1])
+        param.init.object<-list(nstates=length(states), matrix.P=matrix.P, last=0, Transition_matrix=mtrans,dist.init=parameters[1:(ndist),],proba.init=proba.init,coef.init=coef.init)
+      }else{
+        param.init.object<-list(nstates=length(states), matrix.P=matrix.P, last=0, Transition_matrix=mtrans,dist.init=parameters[1:(ndist),],proba.init=proba.init)
+        
+      }}
+  }
+  ################################
+  # with data
+  ################
+  else{
+    if (missing(cov) && missing(cov_tra)==FALSE && missing(proba_init))
+      stop("To indicate the transitions for covariates you need to define the covariates matrix")
+    if(!missing(cov)){
+      if(dim(data)[1]!=dim(cov)[1])
+        stop("Argument 'data' and 'cov' need to have the same number of rows")
+      if(!is.data.frame(cov))
+        stop("Argument 'cov' must be a data.frame")}
+    if(!is.data.frame(data))
+      stop("Argument 'data' must be a data.frame")
+    if(!missing(cens) && !cens%in%data[,3])stop("Wrong format of the argument 'cens'")
+    
+    if(!missing(proba_init) && !missing(mtrans) && length(proba_init)!=length(which(mtrans!=FALSE)))
+      stop("The length of 'proba_init' must be the same as the number of possible transitions in the matrix 'mtrans'")
+    #number of states
+    s<-length(states)
+    if(!missing(cens)){
+      for(i in 1:dim(data)[1]){
+        if(data[i,3]==cens){
+          if(i<dim(data)[1] && data[i+1,1]==data[i,1]){
+            stop("The censure is not the last state of individuals")}
+        }
+      }
+    }
+    trans.h<-data[data[,2]!=data[,3],2]
+    trans.j<-data[data[,2]!=data[,3],3]
+    if(missing(cens)){
+      trans.cens<-data[data[,2]==data[,3],3]}
+    else{
+      trans.cens<-data[data[,3]==cens,3]}
+    
+    table.state<-matrix(ncol=s, nrow=s) 
+    for(i in 1:s){
+      for (j in 1:s){
+        if(i!=j){
+          table.state[i,j]<-1*(sum(1*(trans.h==states[i] & trans.j==states[j])))}
+        else{table.state[i,j]<-1*(sum(1*(trans.cens==states[i])))}
+      }
+    }
+    if(!missing(cens)){
+      for(i in 1:dim(data)[1]){
+        if(data[i,3]==cens){
+          data[i,3]<-data[i,2]
+        }
+      }}
+    #number of censured patients
+    Ncens<-length(which(data[,2]==data[,3]))
+    time.ind<-NA
+    #number of the covariates r
+    if(missing(cov)){r<-0
+    cov=as.matrix(rep(0,dim(data)[1]))}
+    else{
+      if(length_cov>=1){r<-c()
+      for(i in 1:length_cov){
+        r<-c(r,length(cov_tra[[i]]))
+        cov_tra[[i]]<-sort(cov_tra[[i]])
+      }
+      cov<-as.matrix(cov)
+      }
+      else{cov<-as.matrix(cov)
+      r<-dim(cov)[2]
+      }
+      
+      #we check if covariates are dependent from time
+      time.ind<-rep(TRUE,dim(cov)[2])
+      for(j in 1:dim(cov)[2]){
+        l<-0
+        for(i in 2:dim(cov)[1]){
+          if(data[i,1]==data[i-1,1]){
+            if(cov[i,j]!=cov[i-1,j]){
+              time.ind[j]<-FALSE
+              i<-dim(cov)[1]+1
+            }}}}}
+    
+    #Construction of the variable that identyfies transitions to a different state
+    #i!=j -> 1
+    #i=j -> 0
+    data[,5]<-1*(data[,2]!=data[,3])
+    #Construction of the variable that specifies the transitions 
+    data[,6]<-as.character(paste(data[,2], data[,3], sep=""))
+    #All observed transitions i!=j
+    trans.hj<-c()
+    trans.hh<-c()
+    for(i in 1:s){
+      for(j in 1:s){
+        if(mtrans[i,j]!=FALSE)trans.hj[length(trans.hj)+1]<-as.character(paste(states[i],states[j],sep=""))
+      }}
+    #All observed transitions i=j
+    for(i in 1:s){
+      trans.hh<-sort(unique(data[data[,5]==0,6]))
+    }
+    trans.hh2<-trans.hh
+    for(i in 1:length(trans.hh)){
+      a<-0
+      for(j in 1:length(trans.hh)){
+        
+        if(length(trans.hh)>0 && mtrans[as.numeric(substring(trans.hh[i],first=1,last=1)),j]==FALSE){
+          a<-a+1
+        }
+        if(a==length(trans.hh)){
+          trans.hh2<-trans.hh[-which(as.numeric(substring(trans.hh,first=1,last=1))==i)]}}}
+    trans.hh<-trans.hh2
+    ##auxilary matrice of logical values
+    mtrans.log<-matrix(FALSE,ncol=s,nrow=s)
+    for(i in 1:dim(mtrans)[1]){
+      for(j in 1:dim(mtrans)[2]){
+        if(mtrans[i,j]!=FALSE)mtrans.log[i,j]<-TRUE
+      }}
+    #Number of transitions to estimate
+    p<-sum(1*mtrans.log)
+    #Initialisation of the parameters
+    #Initial Transition Matrix P
+    #t vector of number of essential transitions in a row
+    #npos vector fo all possible transitions
+    t<-rep(0,s)
+    pos<-list()
+    npos<-c()
+    dist<-c()
+    matrix.P<-matrix(ncol=s, nrow=s)
+    #table.state<-matrix(ncol=s, nrow=s) 
+    for(i in 1:s){
+      k<-0
+      for (j in 1:s){
+        if(mtrans[i,j]!=FALSE){
+          dist<-c(dist,mtrans[i,j])
+          if(sum(1*(trans.h==states[i]))>0){
+            matrix.P[i, j]<-1*(i!=j)*(sum(1*(trans.h==states[i] & trans.j==states[j]))/sum(1*(trans.h==states[i])))}
+          else{matrix.P[i,j]<-0}
+          k<-k+1
+          pos[[length(pos)+1]]<-c(states[i],states[j])
+          npos[length(npos)+1]<-as.character(paste(states[i],states[j],sep=""))
+        }
+        else{matrix.P[i,j]<-0}
+        #if(i!=j){
+        #table.state[i,j]<-1*(sum(1*(trans.h==states[i] & trans.j==states[j])))}
+        #else{table.state[i,j]<-1*(sum(1*(trans.cens==states[i])))}
+      }
+      t[i]<-k
+    }
+    t<-t-1
+    pos.temp<-list()
+    ## codes for distributions
+    for(i in 1:length(dist)){
+      if(dist[i]%in%c("E","Exp","Exponential"))dist[i]<-1
+      if(dist[i]%in%c("W","Weibull"))dist[i]<-2
+      if(dist[i]%in%c("EW","EWeibull","Exponentiated Weibull"))dist[i]<-3}
+    dist<-as.numeric(dist)
+    #deleting the last transitions in the row from the calculations of P
+    
+    if(s>2){
+      for(i in 1:(length(pos)-1)){
+        if(pos[[i]][[1]]==pos[[i+1]][[1]])pos.temp[length(pos.temp)+1]<-pos[i]
+        if(i>1){
+          if(pos[[i]][[1]]!=pos[[i+1]][[1]] && pos[[i]][[1]]!=pos[[i-1]][[1]])pos.temp[length(pos.temp)+1]<-pos[i]
+        }}
+      pos<-pos.temp
+      
+      npos<-c(length(pos))
+      for(i in 1:length(pos)){
+        
+        npos[i]<-as.character(paste(pos[[i]][[1]],pos[[i]][[2]],sep=""))
+      }
+      #number of probabilites in the parameters matrix
+      proba_new<-c()
+      proba<-proba_init
+      
+      if(length(states)>2){
+        nprob<-length(npos)
+        for(i in 1:s){
+          if(1*sum(mtrans.log[i,])>0){
+            if(!missing(proba_init)){
+              p_in_row<-1*sum(mtrans.log[i,])
+              proba_new<-c(proba_new,proba[1:p_in_row])
+              proba_new<-proba_new[1:(length(proba_new)-1)]
+              
+              proba<-proba[(p_in_row+1):length(proba)]}
+          }
+        }
+      }}
+    else{
+      
+      nprob<-0
+      npos<-c()}
+    if(!missing(proba_init)){
+      proba_init2<-proba_init
+      proba_init<-proba_new}
+    #Matrix of the Parametres
+    # e parametres sigma
+    # trans.e for which transitions
+    # w parametres sigma
+    # trans.w for which transitions
+    # ew parameters theta
+    # trans.ew for which transitions
+    e<-0
+    trans.e<-trans.hj
+    w<-0
+    trans.w<-c()
+    ew<-0
+    trans.ew<-c()
+    for(i in 1:length(dist)){
+      if(dist[i]==1)e<-e+1
+      if(dist[i]==2){e<-e+1
+      w<-w+1
+      trans.w<-c(trans.w,trans.hj[i]) }
+      if(dist[i]==3){e<-e+1
+      w<-w+1
+      trans.w<-c(trans.w,trans.hj[i])
+      ew<-ew+1
+      trans.ew<-c(trans.ew,trans.hj[i])}}
+    ndist<-e+w+ew
+    
+    
+    #Matrix of the Parametres
+    # p parametres nu
+    # p parametres sigma
+    # p parametres teta
+    # sum(t)  initial probabilities of Markov chain (tyle ile trzeba)
+    # r coeff of regression Beta
+    nbeta<-0
+    if(length(r)>1 || any(r>0)){
+      if(length_cov>=1){
+        label_beta<-c()
+        nbeta<-0
+        trans_beta<-c()
+        val_beta<-c()
+        for(i in 1:length(r)){
+          label_beta<-c(label_beta,sort(rep(paste("Beta", i, sep=""), r[i])))
+          nbeta<-nbeta+r[i]
+          trans_beta<-c(trans_beta,cov_tra[[i]])
+          val_beta<-rep(0,length(trans_beta))
+        }
+        
+      }
+      else{label_beta<-sort(rep(paste("Beta", 1:r, sep=""), p))
+      nbeta<-p*r
+      trans_beta<-rep(trans.hj,r)
+      val_beta<-rep(0,p*r)
+      }}
+    else{
+      label_beta<-c()
+      trans_beta<-c()
+      val_beta<-c()}
+    
+    temp2<-data.frame( Transition=data[,6],covariates=cov)
+    #The initial parameters
+    #checking if the vectors are OK
+    
+    if(!missing(dist_init)){
+      if(length(dist_init)!=ndist || any(dist_init[1:ndist]<=0) || !all(is.numeric(dist_init)))	
+        stop("Wrong format of the vector 'dist_init'")
+    }
+    
+    if(!missing(proba_init)){
+      if(length(proba_init)!=nprob || any(proba_init<0) || any(proba_init>=1) || !is.numeric(proba_init))
+        stop("Wrong format of the vector 'proba_init'")
+    }
+    
+    if(!missing(coef_init)){
+      if(length(coef_init)!=nbeta || !all(is.numeric(coef_init)))stop("Wrong format of the vector 'coef_init'")}
+    
+    if(r==0){l<-0
+    } else if(length(r)>1 || any(r>0)){l<-p}
+    parameters<-data.frame(Label=c(rep("sigma",e),rep("nu", w), rep("theta",ew),
+                                   rep("P",nprob),label_beta ),
+                           Transition=c(trans.e,trans.w,trans.ew,npos,trans_beta),
+                           Value=c(rep(1, e),rep(1,w),rep(1,ew),rep(0,nprob),val_beta))
+    for(i in 1:s){
+      for(j in 1:s){
+        parameters$Value[parameters$Label=="P" & parameters$Transition==as.character(paste(states[i],states[j], sep=""))]<-matrix.P[i,j]
+      }}
+    if(!missing(dist_init))parameters[1:ndist,3]<-dist_init
+    if(!missing(proba_init))parameters[(ndist+1):(ndist+nprob),3]<-proba_init
+    if(!missing(coef_init))parameters[(ndist+nprob+1):(ndist+nprob+nbeta),3]<-coef_init
+    
+    dimnames(matrix.P)<-list(states,states)
+    colnames(mtrans)<-states
+    rownames(mtrans)<-states
+    for(i in 1:length(states)){
+      for(j in 1:length(states)){
+        if(mtrans[i,j]==FALSE)mtrans[i,j]<-"-"
+        if(mtrans[i,j]=="E")mtrans[i,j]<-"Exponential"
+        if(mtrans[i,j]=="W")mtrans[i,j]<-"Weibull"
+        if(mtrans[i,j]=="EW")mtrans[i,j]<-"Exponentiated Weibull"
+      }}
+    
+    message<-paste("Initial values for the Multi-State Semi-Markov Model for ", s," states")
+    dimnames(table.state)<-list(states,states)
+    if(missing(proba_init)){
+      proba.init<-parameters[1:e,]
+      proba_init2<-parameters[(ndist+1):(ndist+nprob),3]
+      licznik<-1
+      last_proba<-0
+      for(i in 1:(e-1)){
+        if(substring(parameters$Transition[i],first=1,last=1)==substring(parameters$Transition[i+1],first=1,last=1)){
+          proba.init[i,3]<-proba_init2[licznik]
+          last_proba<-last_proba+proba_init2[licznik]
+          licznik<-licznik+1}
+        else if(i<e-1){
+          proba.init[i,3]<-1-last_proba
+          last_proba<-0}
+        if(i==e-1){
+          proba.init[i+1,3]<-1-last_proba
+        }
+      }
+      proba.init$Label<-"P"
+      if(nbeta>0){
+        coef.init = parameters[(ndist+nprob+1):(ndist+nprob+nbeta),]
+        rownames(coef.init) <- c(1:dim(coef.init)[1])
+        param.init.object<-list(nstates=length(states), table.state=table.state, Ncens=Ncens, matrix.P=matrix.P,last=max(data[,4]),Transition_matrix=mtrans,dist.init=parameters[1:ndist,],proba.init=proba.init,coef.init=coef.init)
+      }else{
+        param.init.object<-list(nstates=length(states), table.state=table.state,  Ncens=Ncens, matrix.P=matrix.P,last=max(data[,4]),Transition_matrix=mtrans,dist.init=parameters[1:ndist,],proba.init=proba.init)
+      }}
+    else{
+      proba.init<-parameters[1:e,]
+      proba.init$Label<-"P"
+      for(i in 1:e){
+        proba.init$Value[i]<-proba_init2[i]
+      }
+      if(nbeta>0){
+        coef.init = parameters[(ndist+nprob+1):(ndist+nprob+nbeta),]
+        rownames(coef.init) <- c(1:dim(coef.init)[1])
+        param.init.object<-list(nstates=length(states), table.state=table.state, Ncens=Ncens, matrix.P=matrix.P,last=max(data[,4]),Transition_matrix=mtrans,dist.init=parameters[1:ndist,],proba.init=proba.init,coef.init=coef.init)
+      }else{
+        
+        param.init.object<-list(nstates=length(states), table.state=table.state,  Ncens=Ncens, matrix.P=matrix.P,last=max(data[,4]),Transition_matrix=mtrans,dist.init=parameters[1:ndist,],proba.init=proba.init)
+      }}
+    
+  }
+  class(param.init.object)<-"param.init"
+  param.init.object
 }
 
 ############################################################################################################################
@@ -3128,7 +3128,7 @@ if(type=="alpha"){
 #the value for the vector of the covariates
 Cov<-cov
 if(!missing(cov)){
-if(length(cov)==beta && is.numeric(cov)){
+if(length(cov)==beta && all(is.numeric(cov))){
 cova<-rep(cov[1],Length)
 COVA<-as.data.frame(cova)
 if(beta>1){
@@ -3252,7 +3252,7 @@ v<-list(vector=v_temp,Time=time,Covariates=COVA,Summary=table,Transition_matrix=
 Cov<-cov
 #the value for the vector of the covariates
 if(!missing(cov)){
-if(length(cov)==beta && is.numeric(cov)){
+if(length(cov)==beta && all(is.numeric(cov))){
 cova<-rep(cov[1],Length)
 COVA<-as.data.frame(cova)
 if(beta>1){
